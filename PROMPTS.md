@@ -1,29 +1,29 @@
 # The prompt
 
-Open this repo in Claude Code (or Codex, or Cursor), and start from this,
-filled in with your app's truth:
+Design first, in the app: open the Card Lab, tune the words, rows,
+material, and accent until the card is yours, then tap Copy recipe. Then
+open this repo in Claude Code (or Codex, or Cursor) and start from this:
 
 ```
-Read AGENTS.md, then build my card.
+Read AGENTS.md, then build my card from this recipe.
 
 My app is [what your app is, one sentence].
 When someone asks Siri "[the phrase you want]", the card should answer
 [the one question this card exists to answer].
 
-Headline: [the one thing that should win the glance, e.g. a status word,
-a name, a number].
-Rows: [two or three label/value/unit facts, e.g. "STREAK 12 days"].
-Sentence: [where the one line of prose comes from, or "none"].
-Buttons: [one or two actions. For each: what it does, and whether it
-should open the app or work in place].
+The values in my recipe are placeholder content from the lab; wire each
+row and the sentence to [where the real data lives in my app].
+Buttons: the primary [what it does; open the app or work in place], the
+second [same, or "remove it"].
 
-My app's colors: [hex values, or "keep the kit's ink"].
+[paste your recipe here]
 ```
 
 Then:
 
-1. Let the agent build it in `Sources/CardKit/`, renamed to your domain.
-2. Judge it on `CardPreviewStage` (the light platter), then in the
+1. Let the agent build it in `Sources/CardKit/`, renamed to your domain,
+   with the recipe's numbers baked in as constants.
+2. Judge it on the lab's stage (the light platter), then in the
    simulator, then on a device through a real Siri ask.
 3. Walk `docs/DEVICE-TRUTH.md` before you decide anything is broken or
    finished.

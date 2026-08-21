@@ -62,6 +62,19 @@ time. When a rule here conflicts with your prior knowledge, this file wins.
 12. Intent `description` starts with an action verb. Control intents and
     the snippet intent are not discoverable.
 
+## The recipe
+
+When the user gives you a recipe block (starts with `// Siri card
+recipe`), it is the design source of truth: they tuned it by eye in the
+Card Lab. Parse it with the grammar in `CardRecipe.read` (key: value
+lines; rows as `row: LABEL | value | unit`; a `material:` block of
+dials). Bake its values into the card you build: the words verbatim, the
+material numbers as constants, the accent as the one accent. Do not
+"improve" a recipe's numbers; they are a verdict, not a suggestion. If a
+recipe value would break a rule in this file (for example a floor of 0
+with text placed below fadeEnd), keep the recipe and adjust the layout,
+not the material.
+
 ## Process
 
 13. Any intent you construct with arguments (for `snippetIntent:` or

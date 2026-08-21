@@ -60,12 +60,14 @@ struct BriefSnippetIntent: SnippetIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ShowsSnippetView {
-        // READ ONLY. Current state in, view out.
+        // READ ONLY. Current state in, view out. The recipe is whatever the
+        // Card Lab last saved, which is the loop's whole point: design in
+        // the lab, ask Siri, see YOUR card.
         let snoozed = BriefStore.isSnoozed
+        let recipe = RecipeStore.load()
         return .result(view: SiriCard(
-            headline: DemoBrief.headline,
-            metrics: DemoBrief.metrics,
-            line: BriefStore.cardExcerpt(snoozed ? DemoBrief.snoozedLine : DemoBrief.line),
+            recipe: recipe,
+            line: BriefStore.cardExcerpt(snoozed ? DemoBrief.snoozedLine : recipe.line),
             snoozed: snoozed
         ))
     }
@@ -144,7 +146,7 @@ enum BriefStore {
     }
 
     static func spokenLine() -> String {
-        isSnoozed ? DemoBrief.snoozedLine : DemoBrief.line
+        isSnoozed ? DemoBrief.snoozedLine : RecipeStore.load().line
     }
 
     /// Whole sentences within a small budget, never a cut mid-thought. The

@@ -12,8 +12,9 @@ import SwiftUI
 struct SiriCardKitDemoApp: App {
     var body: some Scene {
         WindowGroup {
-            CardPreviewStage()
-                .preferredColorScheme(.dark)
+            // The Card Lab is the app: design in the thing, then ask Siri
+            // and see what you designed.
+            CardLab()
         }
     }
 }

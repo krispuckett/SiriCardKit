@@ -10,10 +10,9 @@
 import SwiftUI
 
 struct CardWellSkin: ViewModifier {
-    var prominent: Bool = false
+    var depth: Double = 0.73
 
     func body(content: Content) -> some View {
-        let depth = CardMaterial.wellDepth
         content
             .background(Capsule().fill(Color.black.opacity(0.18 + 0.42 * depth)))
             .overlay {
@@ -55,7 +54,7 @@ struct CardWellLabel: View {
 }
 
 extension View {
-    func cardWell(prominent: Bool = false) -> some View {
-        modifier(CardWellSkin(prominent: prominent))
+    func cardWell(depth: Double = 0.73) -> some View {
+        modifier(CardWellSkin(depth: depth))
     }
 }
