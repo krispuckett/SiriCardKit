@@ -1,0 +1,25 @@
+# Generate the demo project with XcodeGen: `xcodegen generate`, then open
+# SiriCardKitDemo.xcodeproj. The generated project is disposable and
+# gitignored; this file is the source of truth.
+name: SiriCardKitDemo
+options:
+  bundleIdPrefix: com.example.siricardkit
+  deploymentTarget:
+    iOS: "26.0"
+targets:
+  SiriCardKitDemo:
+    type: application
+    platform: iOS
+    sources:
+      - Sources
+      - DemoApp
+    info:
+      path: DemoApp/Info.plist
+      properties:
+        UILaunchScreen: {}
+        CFBundleDisplayName: Card Kit
+    settings:
+      base:
+        SWIFT_VERSION: "6.0"
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic

@@ -1,0 +1,12 @@
+# Generated project: run `xcodegen generate` to recreate
+SiriCardKitDemo.xcodeproj/
+DemoApp/Info.plist
+
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# macOS
+.DS_Store
