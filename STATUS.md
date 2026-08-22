@@ -34,6 +34,17 @@ human or agent. Update this file when either changes.
   self-contained portable form of AGENTS.md that buyers copy into their
   own repo. Rule: AGENTS.md and the skill change together, AGENTS.md
   wins in this repo (noted in CLAUDE.md).
+- The canvas shipped (2026-08-22): the card is an ordered list of
+  blocks (eyebrow, headline, row, sentence, chip, footnote, wells) and
+  the stage is the editor: tap a block for ring plus inspector (edit,
+  move, remove), add row offers only what the laws allow. The laws are
+  rails in CardLaw (one of everything but rows at four, first wins,
+  wells pinned last; the chip wears the accent and the eyebrow drops to
+  ink). Text form gained order-is-layout plus chip: and note: keys; old
+  recipes and old saved designs migrate cleanly (LegacyRecipe). Two new
+  blocks: state chip and mono footnote. Verified in the simulator
+  (regression on presets, legacy decode, chip card, selection); the
+  canvas has not yet been judged on device.
 
 ## Open decisions (the owner's, not an agent's)
 

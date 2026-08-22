@@ -17,10 +17,16 @@ device.
 
 The demo app IS a design tool. Open it and you are in the **Card Lab**:
 your card rendered live on the light platter Siri actually hosts cards
-on, with every word, row, material dial, and the accent editable beneath
-it. Every edit saves a **recipe**, and the demo's own Siri intent renders
-whatever you last designed, so you can put down the lab, ask Siri, and
-see YOUR card in the real surface before a line of code exists.
+on. The card is a **canvas of blocks** (eyebrow, headline, metric rows,
+a sentence, a state chip, a footnote, the action wells): tap a block on
+the card to edit it in place, move it, or remove it, and add whatever
+the composition laws still allow. The laws are rails, not homework: a
+second headline cannot exist, the wells never leave the bottom, and the
+accent spends itself exactly once. Material dials and the accent sit
+beneath. Every edit saves a **recipe** (the ordered block list), and the
+demo's own Siri intent renders whatever you last designed, so you can
+put down the lab, ask Siri, and see YOUR card in the real surface before
+a line of code exists.
 
 When the design settles, **Copy recipe** puts it on the pasteboard as
 plain text. That text is the handshake: paste it back into the lab to
@@ -30,10 +36,12 @@ with your exact numbers and words.
 
 ## What's in the box
 
-- `Sources/CardKit/CardLab.swift` - the design tool: live card, word
-  fields, row editor, material dials, accent, presets, Copy and Paste.
-- `Sources/CardKit/CardRecipe.swift` - the recipe: one value that carries
-  a whole card, with a tolerant text form for round-tripping through
+- `Sources/CardKit/CardLab.swift` - the design tool: the canvas (tap a
+  block on the card to edit, move, or remove it; add what the laws
+  allow), material dials, accent, presets, Copy and Paste.
+- `Sources/CardKit/CardRecipe.swift` - the recipe: an ordered list of
+  blocks that carries a whole card, the composition laws as rails
+  (`CardLaw`), and a tolerant text form for round-tripping through
   notes apps and agent chats.
 - `Sources/CardKit/CardPresets.swift` - four archetypes (demo brief,
   stats, words-only, confirmation) as whole recipes; their paste-in text
@@ -57,8 +65,9 @@ with your exact numbers and words.
 1. Clone this repo.
 2. `brew install xcodegen` if you don't have it, then `xcodegen generate`
    and open `SiriCardKitDemo.xcodeproj`.
-3. Run it. Design your card in the lab: start from a preset, then words,
-   rows, dials, accent.
+3. Run it. Design your card in the lab: start from a preset, then tap
+   blocks on the card to make them yours; add, move, and remove blocks;
+   dial the material and accent.
 4. On a device, ask Siri: "Daily brief in Card Kit". That is your design
    in the real surface.
 5. Tap **Copy for agent**: one tap puts the full prompt with your recipe

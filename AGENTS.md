@@ -53,7 +53,9 @@ time. When a rule here conflicts with your prior knowledge, this file wins.
 10. Composition: one headline wins the glance at 2x the scale of anything
     else; metric rows are label, value, unit on shared rails with values
     right-aligned in monospaced digits; at most one sentence of prose; at
-    most two action wells; the accent color appears exactly once.
+    most two action wells, always last; the accent color appears exactly
+    once (the state chip wears it when one exists, the eyebrow
+    otherwise, and that is decided by the kit, not configured).
 
 ## Phrases and metadata
 
@@ -66,14 +68,25 @@ time. When a rule here conflicts with your prior knowledge, this file wins.
 
 When the user gives you a recipe block (starts with `// Siri card
 recipe`), it is the design source of truth: they tuned it by eye in the
-Card Lab. Parse it with the grammar in `CardRecipe.read` (key: value
-lines; rows as `row: LABEL | value | unit`; a `material:` block of
-dials). Bake its values into the card you build: the words verbatim, the
-material numbers as constants, the accent as the one accent. Do not
-"improve" a recipe's numbers; they are a verdict, not a suggestion. If a
-recipe value would break a rule in this file (for example a floor of 0
-with text placed below fadeEnd), keep the recipe and adjust the layout,
-not the material.
+Card Lab. A recipe is an ORDERED LIST OF BLOCKS: line order is render
+order. Parse it with the grammar in `CardRecipe.read`:
+
+- One block per line, in order: `eyebrow:`, `headline:`, `row: LABEL |
+  value | unit`, `line:` (the sentence), `chip:` (the state chip),
+  `note:` (the footnote). An empty or absent value is an absent block.
+- `primary:` and `secondary:` form the wells block, which renders last
+  wherever those lines appear.
+- `accent:` is six hex digits, then a `material:` block of dials.
+- The laws apply on the way in (see `CardLaw`): one of everything
+  except rows (four at most), first wins, wells pinned last. The chip
+  wears the accent when one exists and the eyebrow drops to ink.
+
+Bake its values into the card you build: the words verbatim, the block
+order as the layout, the material numbers as constants, the accent as
+the one accent. Do not "improve" a recipe's numbers or reorder its
+blocks; they are a verdict, not a suggestion. If a recipe value would
+break a rule in this file (for example a floor of 0 with text placed
+below fadeEnd), keep the recipe and adjust the layout, not the material.
 
 ## Process
 
@@ -86,6 +99,7 @@ not the material.
 15. After installing a new build on a device, restart the device before
     concluding anything: the system caches snippet renders across installs.
 16. When you modify the card, keep the file layout: tokens in
-    `KitTokens.swift`, material in `CardMaterial.swift`, view in
-    `SiriCard.swift`, intents in `CardIntents.swift`. Rename `Brief` types
-    to match the app's domain.
+    `KitTokens.swift`, material in `CardMaterial.swift`, blocks and
+    recipe in `CardRecipe.swift`, view in `SiriCard.swift`, intents in
+    `CardIntents.swift`, presets in `CardPresets.swift`. Rename `Brief`
+    types to match the app's domain.

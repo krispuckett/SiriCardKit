@@ -18,17 +18,28 @@ files into the app target.
 ## The recipe is a verdict
 
 A block starting with `// Siri card recipe` is the design source of truth:
-the person tuned it by eye in the Card Lab. Grammar: `key: value` lines;
-rows as `row: LABEL | value | unit`; a `material:` block of dials
-(topOpacity, fadeEnd, fadeCurve, floor, corner, rim, wellDepth); accent as
-6 hex digits. Unknown keys are skipped and order does not matter.
+the person tuned it by eye in the Card Lab. A recipe is an ORDERED LIST OF
+BLOCKS: line order is render order. Grammar:
 
-Bake its values into the card verbatim: the words as written, the material
-numbers as constants, the accent as the one accent. Do not "improve" a
-recipe's numbers. If a recipe value would break a rule below (a floor of 0
-with text placed below fadeEnd, say), keep the recipe and adjust the
-layout, not the material. Anything still wearing [brackets] in the prompt
-is a question only the person can answer; ask.
+- One block per line, in order: `eyebrow:`, `headline:`, `row: LABEL |
+  value | unit`, `line:` (the sentence), `chip:` (the state chip),
+  `note:` (the footnote). An empty or absent value is an absent block.
+- `primary:` and `secondary:` form the wells block, which renders last
+  wherever those lines appear.
+- `accent:` is 6 hex digits, then a `material:` block of dials
+  (topOpacity, fadeEnd, fadeCurve, floor, corner, rim, wellDepth).
+- Unknown keys are skipped. The laws apply on the way in: one of
+  everything except rows (four at most), first wins, wells pinned last.
+  The chip wears the accent when one exists and the eyebrow drops to
+  ink; that is decided, not configured.
+
+Bake its values into the card verbatim: the words as written, the block
+order as the layout, the material numbers as constants, the accent as the
+one accent. Do not "improve" a recipe's numbers or reorder its blocks. If
+a recipe value would break a rule below (a floor of 0 with text placed
+below fadeEnd, say), keep the recipe and adjust the layout, not the
+material. Anything still wearing [brackets] in the prompt is a question
+only the person can answer; ask.
 
 ## Architecture (non-negotiable)
 
@@ -80,7 +91,9 @@ is a question only the person can answer; ask.
 11. Composition: one headline wins the glance at 2x the scale of anything
     else; metric rows are label, value, unit on shared rails with values
     right-aligned in monospaced digits; at most one sentence of prose; at
-    most two action wells; the accent color appears exactly once.
+    most two action wells, always last; the accent color appears exactly
+    once (the state chip wears it when one exists, the eyebrow
+    otherwise).
 
 ## Phrases and metadata
 

@@ -9,6 +9,11 @@ Each preset already obeys the laws (one headline, shared rails, at most
 one sentence, two wells, the accent spent once), so what you start from
 is already a card. Tune it in the lab; do not design in the text.
 
+A recipe reads in order: line order is block order on the card. Two
+keys beyond what these presets use: `chip:` adds a state chip (it wears
+the accent and the eyebrow drops to ink), and `note:` adds a quiet mono
+footnote. The wells (`primary:`, `secondary:`) always render last.
+
 ## The demo brief
 
 The kit's default: three rows, a sentence, two wells.
@@ -36,8 +41,8 @@ material:
 
 ## The stats card
 
-Numbers carry it: four rows, no sentence, one well. Because no row here
-needs prose, the sentence is explicitly empty.
+Numbers carry it: four rows, no sentence, one well. An absent key is an
+absent block, so there is simply no `line:` here.
 
 ```
 // Siri card recipe
@@ -47,7 +52,6 @@ row: DISTANCE | 86.4 | km
 row: CLIMB | 1,240 | m
 row: TIME | 3:58 | hrs
 row: RIDES | 4 |
-line:
 primary: Open the log
 secondary:
 accent: 5C7A9E
@@ -87,7 +91,7 @@ material:
 ## The confirmation card
 
 An act just happened; the card proves it and offers the undo. Two short
-rows, no sentence, both wells earning their place.
+rows, a footnote instead of a sentence, both wells earning their place.
 
 ```
 // Siri card recipe
@@ -95,7 +99,7 @@ eyebrow: CONFIRMED
 headline: You're booked
 row: WHEN | Tue 3:00 | pm
 row: WITH | Dr. Alvarez |
-line:
+note: Booked just now. Undo holds for an hour.
 primary: Add to calendar
 secondary: Undo
 accent: 6F8F6A
