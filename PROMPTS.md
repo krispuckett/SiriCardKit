@@ -1,11 +1,14 @@
 # The prompt
 
 Design first, in the app: open the Card Lab, tune the words, rows,
-material, and accent until the card is yours, then tap Copy recipe. Then
-open this repo in Claude Code (or Codex, or Cursor) and start from this:
+material, and accent until the card is yours, then tap **Copy for
+agent**. That one tap writes this whole prompt with your recipe already
+inside it; fill in the bracketed lines and paste it to Claude Code (or
+Codex, or Cursor) with this repo open. The scaffold, for reference:
 
 ```
-Read AGENTS.md, then build my card from this recipe.
+Read AGENTS.md, or load the siri-card skill if it's installed, then
+build my card from this recipe.
 
 My app is [what your app is, one sentence].
 When someone asks Siri "[the phrase you want]", the card should answer

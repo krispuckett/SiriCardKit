@@ -31,17 +31,24 @@ with your exact numbers and words.
 ## What's in the box
 
 - `Sources/CardKit/CardLab.swift` - the design tool: live card, word
-  fields, row editor, material dials, accent, Copy and Paste recipe.
+  fields, row editor, material dials, accent, presets, Copy and Paste.
 - `Sources/CardKit/CardRecipe.swift` - the recipe: one value that carries
   a whole card, with a tolerant text form for round-tripping through
   notes apps and agent chats.
+- `Sources/CardKit/CardPresets.swift` - four archetypes (demo brief,
+  stats, words-only, confirmation) as whole recipes; their paste-in text
+  forms live in `docs/PRESETS.md`.
 - `Sources/CardKit/` - the card itself: the material (ink that melts into
   the system's own glass), the carved action wells, the metric row
   grammar, and the full intent trio (main intent, snippet intent, control
   intents) with every hard-won rule written next to the code it protects.
 - `AGENTS.md` / `CLAUDE.md` - rules files that make agents build your
   card correctly the first time, including how to read a recipe.
+- `.claude/skills/siri-card/` - the same rules as a portable Claude Code
+  skill. Copy the folder into your own app repo's `.claude/skills/` and
+  any Claude Code session there knows how to build your card.
 - `PROMPTS.md` - the prompt to hand your agent along with your recipe.
+  The lab's Copy for agent button writes it for you, recipe included.
 - `docs/DEVICE-TRUTH.md` - the checklist that separates "renders in the
   sim" from "works in Siri on a phone".
 
@@ -50,11 +57,17 @@ with your exact numbers and words.
 1. Clone this repo.
 2. `brew install xcodegen` if you don't have it, then `xcodegen generate`
    and open `SiriCardKitDemo.xcodeproj`.
-3. Run it. Design your card in the lab: words, rows, dials, accent.
+3. Run it. Design your card in the lab: start from a preset, then words,
+   rows, dials, accent.
 4. On a device, ask Siri: "Daily brief in Card Kit". That is your design
    in the real surface.
-5. Tap Copy recipe, then hand the recipe and the prompt in `PROMPTS.md`
-   to your agent to build the card into your own app.
+5. Tap **Copy for agent**: one tap puts the full prompt with your recipe
+   inside it on the pasteboard. Paste it to Claude Code, Codex, or
+   Cursor, fill in the bracketed lines, and the agent builds the card
+   into your own app. (Copy Recipe copies just the design, for saving or
+   restoring.)
+6. If your app repo uses Claude Code, copy `.claude/skills/siri-card/`
+   into it so the rules travel with your project.
 
 ## The five failures this kit exists to prevent
 

@@ -23,3 +23,7 @@ Repo-specific notes for Claude Code:
 
 - Read STATUS.md at the start of a session: it carries the working state
   and the open decisions that live outside this repo's code.
+- `.claude/skills/siri-card/SKILL.md` is the portable form of AGENTS.md
+  for buyers' repos. When a rule in AGENTS.md changes, change the skill
+  in the same commit; they are one set of rules in two wrappers, and in
+  this repo AGENTS.md wins.
