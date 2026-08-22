@@ -40,7 +40,7 @@ struct SiriCard: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 ForEach(recipe.rows) { row in
-                    CardMetricRow(row: row)
+                    CardMetricRow(row: row, showsUnitRail: hasUnitRail)
                 }
             }
 
@@ -72,12 +72,19 @@ struct SiriCard: View {
         .padding(24)
         .cardMaterial(recipe.material)
     }
+
+    /// The unit rail exists only when some row earned it: a unitless card's
+    /// values sit on the true right rail instead of an invisible column.
+    private var hasUnitRail: Bool {
+        recipe.rows.contains { !$0.unit.isEmpty }
+    }
 }
 
 // MARK: - Metric rows
 
 struct CardMetricRow: View {
     let row: RecipeRow
+    var showsUnitRail: Bool = true
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -90,10 +97,12 @@ struct CardMetricRow: View {
                 .font(.system(size: 16, weight: .medium, design: .monospaced))
                 .monospacedDigit()
                 .foregroundStyle(KitInk.primary)
-            Text(row.unit)
-                .font(.system(size: 12, design: .monospaced))
-                .foregroundStyle(KitInk.tertiary)
-                .frame(width: 34, alignment: .leading)
+            if showsUnitRail {
+                Text(row.unit)
+                    .font(.system(size: 12, design: .monospaced))
+                    .foregroundStyle(KitInk.tertiary)
+                    .frame(width: 34, alignment: .leading)
+            }
         }
         .accessibilityElement(children: .combine)
     }

@@ -22,7 +22,7 @@ struct CardPreviewStage: View {
                         snoozed ? DemoBrief.snoozedLine : recipe.line),
                     snoozed: snoozed
                 )
-                .frame(width: 340)
+                .frame(maxWidth: KitCard.width)
 
                 Button {
                     snoozed.toggle()

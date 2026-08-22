@@ -8,6 +8,15 @@
 
 import SwiftUI
 
+/// The card's canvas. One width everywhere a stage renders the card, so the
+/// lab, the standalone stage, and a screenshot all tell the same truth. The
+/// fold is the height ceiling from the agent rules: past it, Siri's sheet
+/// pushes the action wells below the fold.
+enum KitCard {
+    static let width: CGFloat = 340
+    static let foldHeight: CGFloat = 340
+}
+
 enum KitInk {
     /// The card's ink. Near-black, never pure black.
     static let bgBase = Color(hex: 0x0A0A0B)

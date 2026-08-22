@@ -18,6 +18,7 @@ struct CardLab: View {
     @State private var panel: LabPanel = .words
     @State private var toast: String?
     @State private var toastTask: Task<Void, Never>?
+    @State private var cardHeight: CGFloat = 0
     @FocusState private var typing: Bool
 
     var body: some View {
@@ -54,21 +55,18 @@ struct CardLab: View {
                 .font(.system(size: 12))
                 .foregroundStyle(KitInk.tertiary)
             Spacer(minLength: 0)
-            Button {
-                haptic()
-                withAnimation(.easeOut(duration: 0.2)) {
-                    recipe = CardRecipe()
+            Menu {
+                ForEach(CardPreset.allCases) { preset in
+                    Button(preset.title) { apply(preset) }
                 }
-                RecipeStore.reset()
-                say("Reset to the demo card")
             } label: {
-                Text("Reset")
+                Text("Presets")
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(KitInk.secondary)
                     .padding(.horizontal, 12)
                     .frame(height: 30)
                     .background(.white.opacity(0.06), in: Capsule())
-                    .contentShape(.capsule)
+                    .hitTarget(pad: 7)
             }
             .buttonStyle(.plain)
         }
@@ -89,23 +87,34 @@ struct CardLab: View {
                         snoozedPreview ? DemoBrief.snoozedLine : recipe.line),
                     snoozed: snoozedPreview
                 )
-                .frame(maxWidth: 330)
-                .scaleEffect(0.94)
+                // True size, no scale: a scaled preview softens hairlines
+                // and judges a card that is not the one Siri renders.
+                .frame(maxWidth: KitCard.width)
+                .onGeometryChange(for: CGFloat.self) { proxy in
+                    proxy.size.height
+                } action: { height in
+                    cardHeight = height
+                }
                 .animation(.easeOut(duration: 0.2), value: recipe)
                 .animation(.easeOut(duration: 0.2), value: snoozedPreview)
-                .padding(.horizontal, 14)
+                .padding(.horizontal, 10)
                 .padding(.vertical, 14)
             }
-            .frame(maxHeight: 356)
             .clipShape(UnevenRoundedRectangle(topLeadingRadius: 20, topTrailingRadius: 20))
 
             HStack(spacing: 6) {
                 stateChip("Fresh", on: !snoozedPreview) { snoozedPreview = false }
                 stateChip("Snoozed", on: snoozedPreview) { snoozedPreview = true }
                 Spacer(minLength: 0)
-                Text("Previewing on Siri's surface")
-                    .font(.system(size: 11))
-                    .foregroundStyle(KitInk.tertiary)
+                if cardHeight > KitCard.foldHeight {
+                    Text("\(Int(cardHeight))pt tall. Siri folds actions past \(Int(KitCard.foldHeight)).")
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(KitInk.secondary)
+                } else {
+                    Text("Previewing on Siri's surface")
+                        .font(.system(size: 11))
+                        .foregroundStyle(KitInk.tertiary)
+                }
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
@@ -131,7 +140,7 @@ struct CardLab: View {
                 .padding(.horizontal, 12)
                 .frame(height: 28)
                 .background(on ? KitInk.primary : Color.white.opacity(0.06), in: Capsule())
-                .contentShape(.capsule)
+                .hitTarget(pad: 8)
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(on ? [.isSelected, .isButton] : .isButton)
@@ -154,7 +163,7 @@ struct CardLab: View {
                         .frame(height: 32)
                         .background(panel == p ? Color.white.opacity(0.08) : .clear,
                                     in: Capsule())
-                        .contentShape(.capsule)
+                        .hitTarget(pad: 6)
                 }
                 .buttonStyle(.plain)
                 .accessibilityAddTraits(panel == p ? [.isSelected, .isButton] : .isButton)
@@ -228,7 +237,7 @@ struct CardLab: View {
                             Image(systemName: "minus.circle.fill")
                                 .font(.system(size: 17))
                                 .foregroundStyle(KitInk.tertiary)
-                                .frame(width: 36, height: 44)
+                                .frame(width: 44, height: 44)
                                 .contentShape(.rect)
                         }
                         .buttonStyle(.plain)
@@ -317,22 +326,20 @@ struct CardLab: View {
                                         lineWidth: recipe.accentHex == UInt32(hex) ? 2 : 1)
                                 }
                                 .frame(width: 40, height: 40)
+                                .padding(2)
                                 .contentShape(.circle)
+                                .padding(-2)
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel(String(format: "Accent %06X", hex))
                     }
                     Spacer(minLength: 0)
-                    TextField("HEX", text: Binding(
-                        get: { String(format: "%06X", recipe.accentHex) },
-                        set: { if let hex = UInt32($0, radix: 16) { recipe.accentHex = hex } }
-                    ))
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 13, design: .monospaced))
-                    .foregroundStyle(KitInk.primary)
-                    .multilineTextAlignment(.trailing)
-                    .focused($typing)
-                    .frame(width: 74)
+                }
+                divider
+                HStack(spacing: 12) {
+                    caption("Custom hex")
+                    Spacer(minLength: 0)
+                    AccentHexField(hex: $recipe.accentHex, typing: $typing)
                 }
             }
             Text("Spent once, on the eyebrow. One accent is the law.")
@@ -356,7 +363,7 @@ struct CardLab: View {
                     say("Recipe loaded")
                 }
             }
-            .labelStyle(.titleAndIcon)
+            .labelStyle(.iconOnly)
             .buttonBorderShape(.capsule)
             .tint(KitInk.bgSurface)
             .accessibilityLabel("Paste a recipe")
@@ -366,9 +373,24 @@ struct CardLab: View {
             Button {
                 haptic()
                 UIPasteboard.general.string = recipe.written()
-                say("Recipe copied. Hand it to your agent.")
+                say("Recipe copied")
             } label: {
-                Label("Copy recipe", systemImage: "doc.on.doc")
+                Label("Recipe", systemImage: "doc.on.doc")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(KitInk.secondary)
+                    .padding(.horizontal, 14)
+                    .frame(height: 42)
+                    .background(.white.opacity(0.06), in: Capsule())
+                    .contentShape(.capsule)
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                haptic()
+                UIPasteboard.general.string = recipe.agentPrompt()
+                say("Prompt and recipe copied. Paste to your agent.")
+            } label: {
+                Label("Copy for agent", systemImage: "arrow.up.forward.app")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(KitInk.bgBase)
                     .padding(.horizontal, 16)
@@ -405,6 +427,15 @@ struct CardLab: View {
     }
 
     // MARK: Feedback
+
+    private func apply(_ preset: CardPreset) {
+        haptic()
+        typing = false
+        withAnimation(.easeOut(duration: 0.2)) {
+            recipe = preset.recipe
+        }
+        say("\(preset.title) loaded")
+    }
 
     private func say(_ message: String) {
         toastTask?.cancel()
@@ -502,7 +533,7 @@ struct CardLab: View {
                         Text(String(format: "default %.\(decimals)f", defaultValue))
                             .font(.system(size: 10, design: .monospaced))
                             .foregroundStyle(KitInk.tertiary)
-                            .contentShape(.rect)
+                            .hitTarget(pad: 16)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Reset \(title) to its default")
@@ -517,7 +548,58 @@ struct CardLab: View {
                 .foregroundStyle(KitInk.primary)
                 .frame(width: 42, alignment: .trailing)
         }
-        .frame(minHeight: 40)
+        .frame(minHeight: 44)
+    }
+}
+
+/// The custom accent field. It keeps a draft while you type and commits on
+/// submit or blur, because a binding that reformats to %06X on every
+/// keystroke rewrites the text under the cursor.
+private struct AccentHexField: View {
+    @Binding var hex: UInt32
+    var typing: FocusState<Bool>.Binding
+    @State private var draft = ""
+    @FocusState private var editing: Bool
+
+    var body: some View {
+        TextField("C8B6A0", text: $draft)
+            .textFieldStyle(.plain)
+            .font(.system(size: 13, design: .monospaced))
+            .foregroundStyle(KitInk.primary)
+            .multilineTextAlignment(.trailing)
+            .autocorrectionDisabled()
+            .textInputAutocapitalization(.characters)
+            .focused(typing)
+            .focused($editing)
+            .frame(width: 74)
+            .onAppear { draft = String(format: "%06X", hex) }
+            .onChange(of: hex) { _, newValue in
+                if !editing { draft = String(format: "%06X", newValue) }
+            }
+            .onChange(of: editing) { _, isEditing in
+                if !isEditing { commit() }
+            }
+            .onSubmit { commit() }
+    }
+
+    private func commit() {
+        let cleaned = draft.trimmingCharacters(in: .whitespaces)
+            .replacingOccurrences(of: "#", with: "")
+        if cleaned.count == 6, let value = UInt32(cleaned, radix: 16) {
+            hex = value
+        }
+        draft = String(format: "%06X", hex)
+    }
+}
+
+private extension View {
+    /// A 44pt hit area without a 44pt layout: pad to the target, take the
+    /// hit shape, then hand the layout back.
+    func hitTarget(pad: CGFloat) -> some View {
+        self
+            .padding(.vertical, pad)
+            .contentShape(.rect)
+            .padding(.vertical, -pad)
     }
 }
 

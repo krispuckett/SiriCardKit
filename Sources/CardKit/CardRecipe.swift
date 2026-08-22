@@ -102,6 +102,28 @@ extension CardRecipe {
         return out.joined(separator: "\n")
     }
 
+    /// The one-tap handoff: the PROMPTS.md scaffold with this recipe
+    /// already inside it. The bracketed lines stay bracketed on purpose;
+    /// they are the questions only the person can answer, and a good agent
+    /// asks about anything still wearing brackets.
+    func agentPrompt() -> String {
+        """
+        Read AGENTS.md, or load the siri-card skill if it's installed, then \
+        build my card from this recipe.
+
+        My app is [what your app is, one sentence].
+        When someone asks Siri "[the phrase you want]", the card should answer
+        [the one question this card exists to answer].
+
+        The values in my recipe are placeholder content from the lab; wire each
+        row and the sentence to [where the real data lives in my app].
+        Buttons: the primary [what it does; open the app or work in place], the
+        second [same, or "remove it"].
+
+        \(written())
+        """
+    }
+
     /// Tolerant: unknown keys are skipped, order does not matter, and a
     /// recipe with no recognizable line at all returns nil so "pasted the
     /// wrong thing" gets an honest answer.
