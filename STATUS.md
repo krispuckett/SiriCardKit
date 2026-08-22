@@ -16,6 +16,24 @@ human or agent. Update this file when either changes.
   the agent rules treat a pasted recipe as a verdict to bake in.
 - UX pass shipped: pinned stage, panel switcher, keyboard Done bar,
   haptics, toast feedback, per-dial defaults with tap-to-reset.
+- Pixel pass shipped (2026-08-22): the stage renders the card at true
+  size (KitCard.width, no scaleEffect, one width shared with the
+  standalone stage), a live fold meter appears when the card passes
+  340pt, the unit rail collapses when no row has a unit, the custom hex
+  field commits on submit instead of fighting the keyboard, every lab
+  control hits 44pt targets, and the accent panel no longer overflows
+  on non-Max phones. Verified by simulator screenshots across all four
+  presets; glass and platter behavior on device still needs the owner's
+  eyes.
+- Ease-of-use pass shipped (2026-08-22): a Presets menu in the top bar
+  (demo, stats, words-only, confirmation; CardPresets.swift, paste-in
+  text in docs/PRESETS.md) and Copy for agent, which puts the whole
+  PROMPTS.md scaffold with the recipe embedded on the pasteboard in one
+  tap.
+- The skill shipped (2026-08-22): .claude/skills/siri-card/SKILL.md, a
+  self-contained portable form of AGENTS.md that buyers copy into their
+  own repo. Rule: AGENTS.md and the skill change together, AGENTS.md
+  wins in this repo (noted in CLAUDE.md).
 
 ## Open decisions (the owner's, not an agent's)
 
@@ -34,8 +52,6 @@ human or agent. Update this file when either changes.
 
 ## Near-term ideas, unranked
 
-- More card archetypes as recipes (a stats card, a words-only card, a
-  confirmation card) shipped as paste-in presets.
 - A recipes gallery in the lab (saved designs, not just the one).
 - Accent-aware platter variants for judging on brighter and darker
   wallpapers.
