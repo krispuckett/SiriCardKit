@@ -26,40 +26,37 @@ enum CardPreset: String, CaseIterable, Identifiable {
             CardRecipe()
         case .stats:
             CardRecipe(
-                eyebrow: "THIS WEEK",
-                headline: "Trending up",
-                rows: [
-                    RecipeRow(label: "DISTANCE", value: "86.4", unit: "km"),
-                    RecipeRow(label: "CLIMB", value: "1,240", unit: "m"),
-                    RecipeRow(label: "TIME", value: "3:58", unit: "hrs"),
-                    RecipeRow(label: "RIDES", value: "4", unit: ""),
+                blocks: [
+                    .eyebrow("THIS WEEK"),
+                    .headline("Trending up"),
+                    .row("DISTANCE", "86.4", "km"),
+                    .row("CLIMB", "1,240", "m"),
+                    .row("TIME", "3:58", "hrs"),
+                    .row("RIDES", "4", ""),
+                    .wells(primary: "Open the log"),
                 ],
-                line: "",
-                primaryTitle: "Open the log",
-                secondaryTitle: "",
                 accentHex: 0x5C7A9E
             )
         case .words:
             CardRecipe(
-                eyebrow: "EVENING",
-                headline: "Wind down",
-                rows: [],
-                line: "The review is written and tomorrow starts with the hard block. Protect the morning; everything else can move.",
-                primaryTitle: "Start wind down",
-                secondaryTitle: "Skip tonight",
+                blocks: [
+                    .eyebrow("EVENING"),
+                    .headline("Wind down"),
+                    .sentence("The review is written and tomorrow starts with the hard block. Protect the morning; everything else can move."),
+                    .wells(primary: "Start wind down", secondary: "Skip tonight"),
+                ],
                 accentHex: 0xC9A26D
             )
         case .confirmation:
             CardRecipe(
-                eyebrow: "CONFIRMED",
-                headline: "You're booked",
-                rows: [
-                    RecipeRow(label: "WHEN", value: "Tue 3:00", unit: "pm"),
-                    RecipeRow(label: "WITH", value: "Dr. Alvarez", unit: ""),
+                blocks: [
+                    .eyebrow("CONFIRMED"),
+                    .headline("You're booked"),
+                    .row("WHEN", "Tue 3:00", "pm"),
+                    .row("WITH", "Dr. Alvarez", ""),
+                    .footnote("Booked just now. Undo holds for an hour."),
+                    .wells(primary: "Add to calendar", secondary: "Undo"),
                 ],
-                line: "",
-                primaryTitle: "Add to calendar",
-                secondaryTitle: "Undo",
                 accentHex: 0x6F8F6A
             )
         }

@@ -4,36 +4,128 @@
 // before any code exists), and Copy hands the same recipe to your agent
 // as text, which builds it into your app for real.
 //
+// Since the canvas: a recipe is an ORDERED LIST OF BLOCKS, not a fixed
+// template. Render order is list order. The composition laws are rails
+// baked into the type (CardLaw): at most one eyebrow, one headline, one
+// sentence, one chip, one footnote, one wells block, four rows, and the
+// wells always sit last because the material's fade reaches zero only
+// beneath them. Every entry point (the canvas, a paste, an agent's hand)
+// runs through the same normalization, so an illegal card cannot exist.
+//
 // The text form is deliberately tolerant to read: people paste it from
 // notes apps, and one stray space should never lose a design.
 
 import SwiftUI
 
-// MARK: - The recipe
+// MARK: - Blocks
 
-struct CardRecipe: Codable, Equatable {
-    var eyebrow = "TODAY"
-    var headline = "On track"
-    var rows: [RecipeRow] = [
-        RecipeRow(label: "FOCUS", value: "92", unit: "min"),
-        RecipeRow(label: "STEPS", value: "8,412", unit: ""),
-        RecipeRow(label: "SLEEP", value: "7:12", unit: "hrs"),
-    ]
-    var line = "Two deep blocks done before noon. Guard the afternoon one; it is the one that slips."
-    var primaryTitle = "Start focus"
-    var secondaryTitle = "Snooze it"
-    var accentHex: UInt32 = 0xC8B6A0
-    var material = MaterialRecipe()
-
-    var accent: Color { Color(hex: accentHex) }
+enum BlockKind: String, Codable, CaseIterable {
+    case eyebrow, headline, row, sentence, chip, footnote, wells
 }
 
-struct RecipeRow: Codable, Equatable, Identifiable {
+/// One block on the canvas. Storage is flat on purpose: every kind reads
+/// the fields it needs and ignores the rest, which keeps Codable, the
+/// lab's bindings, and the legacy migration simple.
+struct CardBlock: Codable, Equatable, Identifiable {
     var id = UUID()
-    var label: String
-    var value: String
-    var unit: String
+    var kind: BlockKind
+    var text = ""        // eyebrow, headline, sentence, chip, footnote
+    var label = ""       // row
+    var value = ""       // row
+    var unit = ""        // row
+    var primary = ""     // wells
+    var secondary = ""   // wells
+
+    private enum CodingKeys: String, CodingKey {
+        case id, kind, text, label, value, unit, primary, secondary
+    }
+
+    init(kind: BlockKind, text: String = "", label: String = "",
+         value: String = "", unit: String = "", primary: String = "",
+         secondary: String = "") {
+        self.kind = kind
+        self.text = text
+        self.label = label
+        self.value = value
+        self.unit = unit
+        self.primary = primary
+        self.secondary = secondary
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        kind = try c.decode(BlockKind.self, forKey: .kind)
+        text = try c.decodeIfPresent(String.self, forKey: .text) ?? ""
+        label = try c.decodeIfPresent(String.self, forKey: .label) ?? ""
+        value = try c.decodeIfPresent(String.self, forKey: .value) ?? ""
+        unit = try c.decodeIfPresent(String.self, forKey: .unit) ?? ""
+        primary = try c.decodeIfPresent(String.self, forKey: .primary) ?? ""
+        secondary = try c.decodeIfPresent(String.self, forKey: .secondary) ?? ""
+    }
 }
+
+extension CardBlock {
+    static func eyebrow(_ text: String) -> CardBlock { .init(kind: .eyebrow, text: text) }
+    static func headline(_ text: String) -> CardBlock { .init(kind: .headline, text: text) }
+    static func row(_ label: String, _ value: String, _ unit: String) -> CardBlock {
+        .init(kind: .row, label: label, value: value, unit: unit)
+    }
+    static func sentence(_ text: String) -> CardBlock { .init(kind: .sentence, text: text) }
+    static func chip(_ text: String) -> CardBlock { .init(kind: .chip, text: text) }
+    static func footnote(_ text: String) -> CardBlock { .init(kind: .footnote, text: text) }
+    static func wells(primary: String, secondary: String = "") -> CardBlock {
+        .init(kind: .wells, primary: primary, secondary: secondary)
+    }
+}
+
+// MARK: - The laws, as rails
+
+/// The composition laws every entry point enforces. The canvas asks
+/// `room` before offering a block, `refusal` for the law to print on a
+/// disabled choice, and everything that constructs a recipe runs
+/// `normalized` so a paste or an agent cannot smuggle in an illegal card.
+enum CardLaw {
+    static let maxRows = 4
+
+    static func limit(for kind: BlockKind) -> Int {
+        kind == .row ? maxRows : 1
+    }
+
+    static func room(in blocks: [CardBlock], for kind: BlockKind) -> Bool {
+        blocks.filter { $0.kind == kind }.count < limit(for: kind)
+    }
+
+    /// The law a full card states when a block is refused.
+    static func refusal(for kind: BlockKind) -> String {
+        switch kind {
+        case .row: "Four rows is the ceiling. A card is read, not scrolled."
+        case .headline: "One headline wins the glance."
+        case .sentence: "One sentence at most, and it earns its place."
+        case .wells: "Two wells maximum, in one block, always last."
+        case .eyebrow: "One eyebrow. The accent is spent once."
+        case .chip: "One chip. The accent is spent once."
+        case .footnote: "One footnote of quiet metadata."
+        }
+    }
+
+    /// First-wins caps, wells pinned last. Order is otherwise preserved.
+    static func normalized(_ blocks: [CardBlock]) -> [CardBlock] {
+        var counts: [BlockKind: Int] = [:]
+        var kept: [CardBlock] = []
+        var wells: CardBlock?
+        for block in blocks {
+            let seen = counts[block.kind, default: 0]
+            guard seen < limit(for: block.kind) else { continue }
+            counts[block.kind] = seen + 1
+            if block.kind == .wells { wells = block } else { kept.append(block) }
+        }
+        if let wells { kept.append(wells) }
+        return kept
+    }
+}
+
+// MARK: - The material dials
 
 /// The material dials, with the shipped defaults as the anchor. See
 /// CardMaterial.swift for what each one does and the two laws behind them.
@@ -45,6 +137,95 @@ struct MaterialRecipe: Codable, Equatable {
     var corner: Double = 42
     var rim: Double = 1.0
     var wellDepth: Double = 0.73
+}
+
+// MARK: - The recipe
+
+struct CardRecipe: Codable, Equatable {
+    var blocks: [CardBlock]
+    var accentHex: UInt32 = 0xC8B6A0
+    var material = MaterialRecipe()
+
+    var accent: Color { Color(hex: accentHex) }
+
+    /// The demo card, block by block.
+    init() {
+        blocks = [
+            .eyebrow("TODAY"),
+            .headline("On track"),
+            .row("FOCUS", "92", "min"),
+            .row("STEPS", "8,412", ""),
+            .row("SLEEP", "7:12", "hrs"),
+            .sentence("Two deep blocks done before noon. Guard the afternoon one; it is the one that slips."),
+            .wells(primary: "Start focus", secondary: "Snooze it"),
+        ]
+    }
+
+    init(blocks: [CardBlock], accentHex: UInt32 = 0xC8B6A0,
+         material: MaterialRecipe = MaterialRecipe()) {
+        self.blocks = CardLaw.normalized(blocks)
+        self.accentHex = accentHex
+        self.material = material
+    }
+
+    /// The card's one sentence, if it has one. The main intent speaks it.
+    var line: String {
+        blocks.first(where: { $0.kind == .sentence })?.text ?? ""
+    }
+
+    /// The chip wears the accent when it exists; the eyebrow otherwise.
+    /// One accent is the law, so this is decided, not configured.
+    var chipWearsAccent: Bool {
+        blocks.contains { $0.kind == .chip }
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case blocks, accentHex, material
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        accentHex = try c.decodeIfPresent(UInt32.self, forKey: .accentHex) ?? 0xC8B6A0
+        material = try c.decodeIfPresent(MaterialRecipe.self, forKey: .material) ?? MaterialRecipe()
+        if let stored = try c.decodeIfPresent([CardBlock].self, forKey: .blocks) {
+            blocks = CardLaw.normalized(stored)
+        } else {
+            // A design saved before the canvas: the fixed template, read
+            // into blocks in its canonical order.
+            blocks = try LegacyRecipe(from: decoder).blocks
+        }
+    }
+}
+
+/// The pre-canvas storage shape, kept only so a saved design survives the
+/// upgrade.
+private struct LegacyRecipe: Decodable {
+    struct LegacyRow: Decodable {
+        var label = ""
+        var value = ""
+        var unit = ""
+    }
+
+    var eyebrow: String?
+    var headline: String?
+    var rows: [LegacyRow]?
+    var line: String?
+    var primaryTitle: String?
+    var secondaryTitle: String?
+
+    var blocks: [CardBlock] {
+        var out: [CardBlock] = []
+        if let eyebrow, !eyebrow.isEmpty { out.append(.eyebrow(eyebrow)) }
+        if let headline, !headline.isEmpty { out.append(.headline(headline)) }
+        for row in rows ?? [] where !row.label.isEmpty {
+            out.append(.row(row.label, row.value, row.unit))
+        }
+        if let line, !line.isEmpty { out.append(.sentence(line)) }
+        if let primaryTitle, !primaryTitle.isEmpty {
+            out.append(.wells(primary: primaryTitle, secondary: secondaryTitle ?? ""))
+        }
+        return CardLaw.normalized(out)
+    }
 }
 
 // MARK: - Storage
@@ -78,18 +259,23 @@ enum RecipeStore {
 extension CardRecipe {
     /// Deterministic: the same recipe always writes the same bytes, so a
     /// design survives a notes app, a chat with an agent, and a diff.
+    /// Line order IS block order; the wells write last as primary and
+    /// secondary, where they render.
     func written() -> String {
-        var out: [String] = [
-            "// Siri card recipe",
-            "eyebrow: \(eyebrow)",
-            "headline: \(headline)",
-        ]
-        for row in rows {
-            out.append("row: \(row.label) | \(row.value) | \(row.unit)")
+        var out: [String] = ["// Siri card recipe"]
+        for block in blocks {
+            switch block.kind {
+            case .eyebrow: out.append("eyebrow: \(block.text)")
+            case .headline: out.append("headline: \(block.text)")
+            case .row: out.append("row: \(block.label) | \(block.value) | \(block.unit)")
+            case .sentence: out.append("line: \(block.text)")
+            case .chip: out.append("chip: \(block.text)")
+            case .footnote: out.append("note: \(block.text)")
+            case .wells:
+                out.append("primary: \(block.primary)")
+                out.append("secondary: \(block.secondary)")
+            }
         }
-        out.append("line: \(line)")
-        out.append("primary: \(primaryTitle)")
-        out.append("secondary: \(secondaryTitle)")
         out.append(String(format: "accent: %06X", accentHex))
         out.append("material:")
         out.append(String(format: "  topOpacity: %.2f", material.topOpacity))
@@ -124,12 +310,17 @@ extension CardRecipe {
         """
     }
 
-    /// Tolerant: unknown keys are skipped, order does not matter, and a
-    /// recipe with no recognizable line at all returns nil so "pasted the
-    /// wrong thing" gets an honest answer.
+    /// Tolerant: unknown keys are skipped, an empty value is an absent
+    /// block, and a text with no recognizable line at all returns nil so
+    /// "pasted the wrong thing" gets an honest answer. Line order becomes
+    /// block order; the laws are applied on the way in (first wins, rows
+    /// capped, wells last).
     static func read(_ text: String) -> CardRecipe? {
-        var recipe = CardRecipe()
-        recipe.rows = []
+        var blocks: [CardBlock] = []
+        var accentHex: UInt32 = 0xC8B6A0
+        var material = MaterialRecipe()
+        var wellPrimary = ""
+        var wellSecondary = ""
         var sawAnything = false
 
         for raw in text.split(separator: "\n", omittingEmptySubsequences: true) {
@@ -140,35 +331,51 @@ extension CardRecipe {
             let value = String(line[line.index(after: colon)...]).trimmingCharacters(in: .whitespaces)
 
             switch key {
-            case "eyebrow": recipe.eyebrow = value; sawAnything = true
-            case "headline": recipe.headline = value; sawAnything = true
+            case "eyebrow":
+                if !value.isEmpty { blocks.append(.eyebrow(value)) }
+                sawAnything = true
+            case "headline":
+                if !value.isEmpty { blocks.append(.headline(value)) }
+                sawAnything = true
             case "row":
                 let parts = value.split(separator: "|", omittingEmptySubsequences: false)
                     .map { $0.trimmingCharacters(in: .whitespaces) }
                 if let label = parts.first, !label.isEmpty {
-                    recipe.rows.append(RecipeRow(
-                        label: label,
-                        value: parts.count > 1 ? parts[1] : "",
-                        unit: parts.count > 2 ? parts[2] : ""
+                    blocks.append(.row(
+                        label,
+                        parts.count > 1 ? parts[1] : "",
+                        parts.count > 2 ? parts[2] : ""
                     ))
                     sawAnything = true
                 }
-            case "line": recipe.line = value; sawAnything = true
-            case "primary": recipe.primaryTitle = value; sawAnything = true
-            case "secondary": recipe.secondaryTitle = value; sawAnything = true
+            case "line":
+                if !value.isEmpty { blocks.append(.sentence(value)) }
+                sawAnything = true
+            case "chip":
+                if !value.isEmpty { blocks.append(.chip(value)) }
+                sawAnything = true
+            case "note":
+                if !value.isEmpty { blocks.append(.footnote(value)) }
+                sawAnything = true
+            case "primary": wellPrimary = value; sawAnything = true
+            case "secondary": wellSecondary = value; sawAnything = true
             case "accent":
-                if let hex = UInt32(value, radix: 16) { recipe.accentHex = hex; sawAnything = true }
-            case "topOpacity": recipe.material.topOpacity = clamp(value, 0, 1) ?? recipe.material.topOpacity
-            case "fadeEnd": recipe.material.fadeEnd = clamp(value, 0.15, 1) ?? recipe.material.fadeEnd
-            case "fadeCurve": recipe.material.fadeCurve = clamp(value, 0.05, 4) ?? recipe.material.fadeCurve
-            case "floor": recipe.material.floor = clamp(value, 0, 1) ?? recipe.material.floor
-            case "corner": recipe.material.corner = clamp(value, 8, 80) ?? recipe.material.corner
-            case "rim": recipe.material.rim = clamp(value, 0, 1) ?? recipe.material.rim
-            case "wellDepth": recipe.material.wellDepth = clamp(value, 0, 1) ?? recipe.material.wellDepth
+                if let hex = UInt32(value, radix: 16) { accentHex = hex; sawAnything = true }
+            case "topOpacity": material.topOpacity = clamp(value, 0, 1) ?? material.topOpacity
+            case "fadeEnd": material.fadeEnd = clamp(value, 0.15, 1) ?? material.fadeEnd
+            case "fadeCurve": material.fadeCurve = clamp(value, 0.05, 4) ?? material.fadeCurve
+            case "floor": material.floor = clamp(value, 0, 1) ?? material.floor
+            case "corner": material.corner = clamp(value, 8, 80) ?? material.corner
+            case "rim": material.rim = clamp(value, 0, 1) ?? material.rim
+            case "wellDepth": material.wellDepth = clamp(value, 0, 1) ?? material.wellDepth
             default: continue
             }
         }
-        return sawAnything ? recipe : nil
+        if !wellPrimary.isEmpty || !wellSecondary.isEmpty {
+            blocks.append(.wells(primary: wellPrimary, secondary: wellSecondary))
+        }
+        guard sawAnything else { return nil }
+        return CardRecipe(blocks: blocks, accentHex: accentHex, material: material)
     }
 
     private static func clamp(_ text: String, _ lo: Double, _ hi: Double) -> Double? {

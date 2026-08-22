@@ -5,9 +5,15 @@
 // whatever you last designed: ask Siri and see your card, before any
 // code exists.
 //
+// Since the canvas: the card itself is the editor. Tap a block on the
+// card to select it (ring on the card, editor beneath), move it, remove
+// it; tap the platter to step back to the block list and the add row.
+// The composition laws are rails, not homework: the add row only offers
+// what the laws still allow, and the wells never leave the bottom.
+//
 // Copy recipe puts the design on the pasteboard as text: paste it back
-// here to restore a design, or paste it to your agent with the prompt in
-// PROMPTS.md to build the card into your own app for real.
+// here to restore a design, or use Copy for agent to hand your agent the
+// whole prompt with the recipe inside.
 
 import SwiftUI
 import UIKit
@@ -15,7 +21,8 @@ import UIKit
 struct CardLab: View {
     @State private var recipe = RecipeStore.load()
     @State private var snoozedPreview = false
-    @State private var panel: LabPanel = .words
+    @State private var panel: LabPanel = .blocks
+    @State private var selection: UUID?
     @State private var toast: String?
     @State private var toastTask: Task<Void, Never>?
     @State private var cardHeight: CGFloat = 0
@@ -51,7 +58,7 @@ struct CardLab: View {
             Text("Card Lab")
                 .font(.system(size: 20, weight: .bold))
                 .foregroundStyle(KitInk.primary)
-            Text("ask Siri to see it live")
+            Text("tap the card to edit it")
                 .font(.system(size: 12))
                 .foregroundStyle(KitInk.tertiary)
             Spacer(minLength: 0)
@@ -81,11 +88,14 @@ struct CardLab: View {
         VStack(spacing: 0) {
             ZStack {
                 PlatterBackdrop()
+                    .onTapGesture { deselect() }
                 SiriCard(
                     recipe: recipe,
                     line: BriefStore.cardExcerpt(
                         snoozedPreview ? DemoBrief.snoozedLine : recipe.line),
-                    snoozed: snoozedPreview
+                    snoozed: snoozedPreview,
+                    selection: selection,
+                    onBlockTap: { select($0) }
                 )
                 // True size, no scale: a scaled preview softens hairlines
                 // and judges a card that is not the one Siri renders.
@@ -179,8 +189,12 @@ struct CardLab: View {
         ScrollView {
             Group {
                 switch panel {
-                case .words: wordsPanel
-                case .rows: rowsPanel
+                case .blocks:
+                    if let selection, recipe.blocks.contains(where: { $0.id == selection }) {
+                        blockEditor(id: selection)
+                    } else {
+                        blocksOverview
+                    }
                 case .material: materialPanel
                 case .accent: accentPanel
                 }
@@ -192,17 +206,117 @@ struct CardLab: View {
         }
         .scrollIndicators(.hidden)
         .animation(.easeOut(duration: 0.18), value: panel)
+        .animation(.easeOut(duration: 0.18), value: selection)
     }
 
-    private var wordsPanel: some View {
-        surface {
-            field("Eyebrow", text: $recipe.eyebrow, prompt: "TODAY")
-            divider
-            field("Headline", text: $recipe.headline, prompt: "The one thing that wins the glance")
-            divider
+    // MARK: The canvas panels
+
+    private var blocksOverview: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ForEach(recipe.blocks) { block in
+                Button {
+                    select(block.id)
+                } label: {
+                    surfaceRow {
+                        HStack(spacing: 10) {
+                            Text(block.kind.title)
+                                .font(.system(size: 12))
+                                .foregroundStyle(KitInk.tertiary)
+                                .frame(width: 74, alignment: .leading)
+                            Text(preview(of: block))
+                                .font(.system(size: 14))
+                                .foregroundStyle(KitInk.primary)
+                                .lineLimit(1)
+                            Spacer(minLength: 0)
+                            Image(systemName: "chevron.forward")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundStyle(KitInk.tertiary)
+                        }
+                        .frame(minHeight: 28)
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+
+            caption("Add a block")
+                .padding(.top, 6)
+                .padding(.leading, 2)
+            addRow
+        }
+    }
+
+    /// The add row IS the rails: a kind at its cap shows dimmed and dead,
+    /// because the law already spent it.
+    private var addRow: some View {
+        FlowingChips(kinds: BlockKind.allCases.filter { $0 != .wells } + [.wells]) { kind in
+            let room = CardLaw.room(in: recipe.blocks, for: kind)
+            Button {
+                add(kind)
+            } label: {
+                Label(kind.title, systemImage: "plus")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(room ? KitInk.secondary : KitInk.tertiary.opacity(0.5))
+                    .padding(.horizontal, 12)
+                    .frame(height: 32)
+                    .background(.white.opacity(room ? 0.06 : 0.03), in: Capsule())
+                    .hitTarget(pad: 6)
+            }
+            .buttonStyle(.plain)
+            .allowsHitTesting(room)
+            .accessibilityLabel(room ? "Add a \(kind.title) block"
+                                     : CardLaw.refusal(for: kind))
+        }
+    }
+
+    @ViewBuilder private func blockEditor(id: UUID) -> some View {
+        if let index = recipe.blocks.firstIndex(where: { $0.id == id }) {
+            let kind = recipe.blocks[index].kind
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 4) {
+                    Button {
+                        deselect()
+                    } label: {
+                        Label("Blocks", systemImage: "chevron.backward")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(KitInk.secondary)
+                            .hitTarget(pad: 14)
+                    }
+                    .buttonStyle(.plain)
+                    Spacer(minLength: 0)
+                    if kind != .wells {
+                        editorControl("chevron.up", label: "Move \(kind.title) up",
+                                      enabled: canMove(id, by: -1)) { move(id, by: -1) }
+                        editorControl("chevron.down", label: "Move \(kind.title) down",
+                                      enabled: canMove(id, by: 1)) { move(id, by: 1) }
+                    }
+                    editorControl("minus.circle", label: "Remove the \(kind.title) block",
+                                  enabled: true) { remove(id) }
+                }
+                surface {
+                    blockFields(index: index)
+                }
+                if let law = editorLaw(for: kind) {
+                    Text(law)
+                        .font(.system(size: 12))
+                        .foregroundStyle(KitInk.tertiary)
+                        .padding(.leading, 2)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder private func blockFields(index: Int) -> some View {
+        let block = $recipe.blocks[index]
+        switch recipe.blocks[index].kind {
+        case .eyebrow:
+            field("Eyebrow", text: block.text, prompt: "TODAY")
+        case .headline:
+            field("Headline", text: block.text,
+                  prompt: "The one thing that wins the glance")
+        case .sentence:
             VStack(alignment: .leading, spacing: 6) {
                 caption("Sentence")
-                TextField("One thought, whole sentences", text: $recipe.line, axis: .vertical)
+                TextField("One thought, whole sentences", text: block.text, axis: .vertical)
                     .lineLimit(2...4)
                     .textFieldStyle(.plain)
                     .font(.system(size: 15))
@@ -210,71 +324,133 @@ struct CardLab: View {
                     .focused($typing)
             }
             .padding(.vertical, 2)
+        case .row:
+            HStack(spacing: 10) {
+                bareField("LABEL", text: block.label, mono: true)
+                    .frame(width: 86)
+                bareField("Value", text: block.value, mono: true)
+                bareField("unit", text: block.unit, mono: true)
+                    .frame(width: 54)
+            }
+        case .chip:
+            field("Chip", text: block.text, prompt: "LIVE")
+        case .footnote:
+            field("Footnote", text: block.text, prompt: "Updated just now")
+        case .wells:
+            field("Primary button", text: block.primary, prompt: "The main act")
             divider
-            field("Primary button", text: $recipe.primaryTitle, prompt: "The main act")
-            divider
-            field("Second button", text: $recipe.secondaryTitle,
+            field("Second button", text: block.secondary,
                   prompt: "Empty shows one button")
         }
     }
 
-    private var rowsPanel: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            ForEach($recipe.rows) { $row in
-                surfaceRow {
-                    HStack(spacing: 10) {
-                        bareField("LABEL", text: $row.label, mono: true)
-                            .frame(width: 86)
-                        bareField("Value", text: $row.value, mono: true)
-                        bareField("unit", text: $row.unit, mono: true)
-                            .frame(width: 54)
-                        Button {
-                            haptic()
-                            withAnimation(.easeOut(duration: 0.18)) {
-                                recipe.rows.removeAll { $0.id == row.id }
-                            }
-                        } label: {
-                            Image(systemName: "minus.circle.fill")
-                                .font(.system(size: 17))
-                                .foregroundStyle(KitInk.tertiary)
-                                .frame(width: 44, height: 44)
-                                .contentShape(.rect)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Remove the \(row.label) row")
-                    }
-                }
-            }
-            if recipe.rows.count < 4 {
-                Button {
-                    haptic()
-                    withAnimation(.easeOut(duration: 0.18)) {
-                        recipe.rows.append(RecipeRow(label: "LABEL", value: "0", unit: ""))
-                    }
-                } label: {
-                    Label("Add a row", systemImage: "plus")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(KitInk.secondary)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 44)
-                        .background(.white.opacity(0.04),
-                                    in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .strokeBorder(.white.opacity(0.06),
-                                              style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
-                        }
-                        .contentShape(.rect)
-                }
-                .buttonStyle(.plain)
-            } else {
-                Text("Four rows is the ceiling. A card is read, not scrolled.")
-                    .font(.system(size: 12))
-                    .foregroundStyle(KitInk.tertiary)
-                    .padding(.leading, 2)
-            }
+    private func editorControl(_ symbol: String, label: String, enabled: Bool,
+                               _ act: @escaping () -> Void) -> some View {
+        Button(action: act) {
+            Image(systemName: symbol)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(enabled ? KitInk.secondary : KitInk.tertiary.opacity(0.4))
+                .frame(width: 44, height: 44)
+                .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .allowsHitTesting(enabled)
+        .accessibilityLabel(label)
+    }
+
+    private func editorLaw(for kind: BlockKind) -> String? {
+        switch kind {
+        case .chip: "The chip wears the accent; the eyebrow drops to ink while one exists."
+        case .row: "Rows share rails: values right-aligned, mono, no meters."
+        case .wells: "The wells stay last. The fade reaches zero only beneath them."
+        case .sentence: "Whole sentences, excerpted to a budget. Never a cut thought."
+        default: nil
         }
     }
+
+    private func preview(of block: CardBlock) -> String {
+        switch block.kind {
+        case .eyebrow, .headline, .sentence, .chip, .footnote:
+            block.text.isEmpty ? "Empty" : block.text
+        case .row:
+            "\(block.label)  \(block.value) \(block.unit)"
+                .trimmingCharacters(in: .whitespaces)
+        case .wells:
+            block.secondary.isEmpty ? block.primary
+                                    : "\(block.primary)  ·  \(block.secondary)"
+        }
+    }
+
+    // MARK: Canvas mutations
+
+    private func select(_ id: UUID) {
+        haptic()
+        typing = false
+        withAnimation(.easeOut(duration: 0.18)) {
+            selection = id
+            panel = .blocks
+        }
+    }
+
+    private func deselect() {
+        guard selection != nil else { return }
+        haptic()
+        typing = false
+        withAnimation(.easeOut(duration: 0.18)) { selection = nil }
+    }
+
+    private func add(_ kind: BlockKind) {
+        guard CardLaw.room(in: recipe.blocks, for: kind) else { return }
+        haptic()
+        let block = starter(for: kind)
+        withAnimation(.easeOut(duration: 0.2)) {
+            if kind != .wells,
+               let wellsIndex = recipe.blocks.firstIndex(where: { $0.kind == .wells }) {
+                recipe.blocks.insert(block, at: wellsIndex)
+            } else {
+                recipe.blocks.append(block)
+            }
+            selection = block.id
+        }
+    }
+
+    private func starter(for kind: BlockKind) -> CardBlock {
+        switch kind {
+        case .eyebrow: .eyebrow("TODAY")
+        case .headline: .headline("Headline")
+        case .row: .row("LABEL", "0", "")
+        case .sentence: .sentence("One thought, whole sentences.")
+        case .chip: .chip("LIVE")
+        case .footnote: .footnote("Updated just now")
+        case .wells: .wells(primary: "The main act")
+        }
+    }
+
+    private func canMove(_ id: UUID, by delta: Int) -> Bool {
+        guard let i = recipe.blocks.firstIndex(where: { $0.id == id }) else { return false }
+        let j = i + delta
+        guard recipe.blocks.indices.contains(j) else { return false }
+        return recipe.blocks[i].kind != .wells && recipe.blocks[j].kind != .wells
+    }
+
+    private func move(_ id: UUID, by delta: Int) {
+        guard canMove(id, by: delta),
+              let i = recipe.blocks.firstIndex(where: { $0.id == id }) else { return }
+        haptic()
+        withAnimation(.easeOut(duration: 0.2)) {
+            recipe.blocks.swapAt(i, i + delta)
+        }
+    }
+
+    private func remove(_ id: UUID) {
+        haptic()
+        withAnimation(.easeOut(duration: 0.2)) {
+            recipe.blocks.removeAll { $0.id == id }
+            selection = nil
+        }
+    }
+
+    // MARK: Material and accent
 
     private var materialPanel: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -342,7 +518,9 @@ struct CardLab: View {
                     AccentHexField(hex: $recipe.accentHex, typing: $typing)
                 }
             }
-            Text("Spent once, on the eyebrow. One accent is the law.")
+            Text(recipe.chipWearsAccent
+                 ? "Spent once, on the chip. One accent is the law."
+                 : "Spent once, on the eyebrow. One accent is the law.")
                 .font(.system(size: 12))
                 .foregroundStyle(KitInk.tertiary)
                 .padding(.leading, 2)
@@ -359,7 +537,10 @@ struct CardLab: View {
                     return
                 }
                 Task { @MainActor in
-                    withAnimation(.easeOut(duration: 0.2)) { recipe = pasted }
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        selection = nil
+                        recipe = pasted
+                    }
                     say("Recipe loaded")
                 }
             }
@@ -432,6 +613,7 @@ struct CardLab: View {
         haptic()
         typing = false
         withAnimation(.easeOut(duration: 0.2)) {
+            selection = nil
             recipe = preset.recipe
         }
         say("\(preset.title) loaded")
@@ -552,6 +734,52 @@ struct CardLab: View {
     }
 }
 
+// MARK: - Lab furniture
+
+enum LabPanel: String, CaseIterable, Identifiable {
+    case blocks, material, accent
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .blocks: "Blocks"
+        case .material: "Material"
+        case .accent: "Accent"
+        }
+    }
+}
+
+extension BlockKind {
+    var title: String {
+        switch self {
+        case .eyebrow: "Eyebrow"
+        case .headline: "Headline"
+        case .row: "Row"
+        case .sentence: "Sentence"
+        case .chip: "Chip"
+        case .footnote: "Footnote"
+        case .wells: "Wells"
+        }
+    }
+}
+
+/// A simple flow for the add chips: rows of capsules that wrap, without
+/// pulling in a Layout for something this small.
+private struct FlowingChips<Content: View>: View {
+    let kinds: [BlockKind]
+    @ViewBuilder let chip: (BlockKind) -> Content
+
+    var body: some View {
+        let columns = [GridItem(.adaptive(minimum: 108), spacing: 8, alignment: .leading)]
+        LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
+            ForEach(kinds, id: \.self) { kind in
+                chip(kind)
+            }
+        }
+    }
+}
+
 /// The custom accent field. It keeps a draft while you type and commits on
 /// submit or blur, because a binding that reformats to %06X on every
 /// keystroke rewrites the text under the cursor.
@@ -600,21 +828,6 @@ private extension View {
             .padding(.vertical, pad)
             .contentShape(.rect)
             .padding(.vertical, -pad)
-    }
-}
-
-enum LabPanel: String, CaseIterable, Identifiable {
-    case words, rows, material, accent
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .words: "Words"
-        case .rows: "Rows"
-        case .material: "Material"
-        case .accent: "Accent"
-        }
     }
 }
 
