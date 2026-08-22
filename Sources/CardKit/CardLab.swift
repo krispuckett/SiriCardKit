@@ -17,154 +17,228 @@ struct CardLab: View {
     @State private var note: String?
 
     var body: some View {
-        ZStack(alignment: .top) {
+        ZStack {
             KitInk.bgBase.ignoresSafeArea()
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 24) {
+                    header
                     stage
-                    controls
+                    wordsGroup
+                    rowsGroup
+                    materialGroup
+                    accentGroup
                 }
-                .padding(16)
-                .padding(.bottom, 32)
+                .padding(20)
+                .padding(.bottom, 8)
             }
+            .scrollIndicators(.hidden)
         }
+        .safeAreaInset(edge: .bottom) { actionBar }
         .preferredColorScheme(.dark)
         .onChange(of: recipe) { _, newValue in
             RecipeStore.save(newValue)
         }
     }
 
+    // MARK: Header
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Card Lab")
+                .font(.system(size: 30, weight: .bold))
+                .foregroundStyle(KitInk.primary)
+            Text("Design your card, then ask Siri and see it live.")
+                .font(.system(size: 14))
+                .foregroundStyle(KitInk.tertiary)
+        }
+        .padding(.top, 8)
+    }
+
     // MARK: The stage
 
     private var stage: some View {
-        ZStack {
-            PlatterBackdrop()
-            VStack(spacing: 12) {
+        VStack(spacing: 0) {
+            ZStack {
+                PlatterBackdrop()
                 SiriCard(
                     recipe: recipe,
                     line: BriefStore.cardExcerpt(
                         snoozedPreview ? DemoBrief.snoozedLine : recipe.line),
                     snoozed: snoozedPreview
                 )
-                .frame(maxWidth: 360)
-
-                Button {
-                    snoozedPreview.toggle()
-                } label: {
-                    Text(snoozedPreview ? "Show fresh state" : "Show snoozed state")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(Color.black.opacity(0.5))
-                }
+                .frame(maxWidth: 352)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 28)
             }
-            .padding(16)
+            .clipShape(UnevenRoundedRectangle(topLeadingRadius: 20, topTrailingRadius: 20))
+
+            // The state the card is previewing, as a quiet control strip in
+            // the stage's own frame.
+            HStack(spacing: 6) {
+                stateChip("Fresh", on: !snoozedPreview) { snoozedPreview = false }
+                stateChip("Snoozed", on: snoozedPreview) { snoozedPreview = true }
+                Spacer(minLength: 0)
+                Text("THE PLATTER IS SIRI'S")
+                    .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                    .tracking(0.8)
+                    .foregroundStyle(KitInk.tertiary)
+            }
+            .padding(12)
+            .background(KitInk.bgSurface)
+            .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 20, bottomTrailingRadius: 20))
         }
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .strokeBorder(.white.opacity(0.08), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(0.35), radius: 24, y: 10)
     }
 
-    // MARK: The controls
+    private func stateChip(_ title: String, on: Bool, _ act: @escaping () -> Void) -> some View {
+        Button(action: act) {
+            Text(title)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(on ? KitInk.bgBase : KitInk.secondary)
+                .padding(.horizontal, 12)
+                .frame(height: 28)
+                .background(on ? KitInk.primary : Color.white.opacity(0.06), in: Capsule())
+                .contentShape(.capsule)
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(on ? [.isSelected, .isButton] : .isButton)
+    }
 
-    private var controls: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            section("Words") {
-                labeledField("Eyebrow", text: $recipe.eyebrow)
-                labeledField("Headline", text: $recipe.headline)
-                VStack(alignment: .leading, spacing: 6) {
-                    caption("Sentence")
-                    TextField("One line at most, whole sentences",
-                              text: $recipe.line, axis: .vertical)
-                        .lineLimit(2...4)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 14))
-                        .padding(10)
-                        .background(KitInk.bgSurface,
-                                    in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-                }
-                labeledField("Primary button", text: $recipe.primaryTitle)
-                labeledField("Second button (empty hides it)", text: $recipe.secondaryTitle)
+    // MARK: Words
+
+    private var wordsGroup: some View {
+        group("Words") {
+            field("Eyebrow", text: $recipe.eyebrow)
+            divider
+            field("Headline", text: $recipe.headline)
+            divider
+            VStack(alignment: .leading, spacing: 8) {
+                caption("Sentence")
+                TextField("One thought, whole sentences", text: $recipe.line, axis: .vertical)
+                    .lineLimit(2...4)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 15))
+                    .foregroundStyle(KitInk.primary)
             }
+            divider
+            field("Primary button", text: $recipe.primaryTitle)
+            divider
+            field("Second button", text: $recipe.secondaryTitle,
+                  footnote: "Leave empty to show one button")
+        }
+    }
 
-            section("Rows") {
-                ForEach($recipe.rows) { $row in
-                    HStack(spacing: 8) {
-                        field("LABEL", text: $row.label).frame(width: 90)
-                        field("Value", text: $row.value)
-                        field("unit", text: $row.unit).frame(width: 64)
-                        Button {
-                            recipe.rows.removeAll { $0.id == row.id }
-                        } label: {
-                            Image(systemName: "minus.circle.fill")
-                                .foregroundStyle(KitInk.tertiary)
-                                .frame(width: 32, height: 32)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                if recipe.rows.count < 4 {
+    // MARK: Rows
+
+    private var rowsGroup: some View {
+        group("Rows") {
+            ForEach($recipe.rows) { $row in
+                HStack(spacing: 10) {
+                    bareField("LABEL", text: $row.label, mono: true)
+                        .frame(width: 84)
+                    bareField("Value", text: $row.value, mono: true)
+                    bareField("unit", text: $row.unit, mono: true)
+                        .frame(width: 52)
                     Button {
-                        recipe.rows.append(RecipeRow(label: "LABEL", value: "0", unit: ""))
+                        withAnimation(.easeOut(duration: 0.15)) {
+                            recipe.rows.removeAll { $0.id == row.id }
+                        }
                     } label: {
-                        Label("Add a row", systemImage: "plus")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(KitInk.secondary)
+                        Image(systemName: "minus.circle.fill")
+                            .font(.system(size: 16))
+                            .foregroundStyle(KitInk.tertiary)
+                            .frame(width: 32, height: 44)
+                            .contentShape(.rect)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Remove the \(row.label) row")
                 }
+                if row.id != recipe.rows.last?.id { divider }
             }
-
-            section("Material") {
-                dial("Top opacity", value: $recipe.material.topOpacity, in: 0...1, step: 0.01)
-                dial("Fade end", value: $recipe.material.fadeEnd, in: 0.15...1, step: 0.01)
-                dial("Fade curve", value: $recipe.material.fadeCurve, in: 0.05...4, step: 0.05)
-                dial("Floor", value: $recipe.material.floor, in: 0...1, step: 0.01)
-                dial("Corner", value: $recipe.material.corner, in: 8...80, step: 1, decimals: 0)
-                dial("Rim", value: $recipe.material.rim, in: 0...1, step: 0.05)
-                dial("Well depth", value: $recipe.material.wellDepth, in: 0...1, step: 0.01)
-            }
-
-            section("Accent") {
-                HStack(spacing: 8) {
-                    ForEach([0xC8B6A0, 0x6F8F6A, 0xC9A26D, 0xB0524A, 0x5C7A9E], id: \.self) { hex in
-                        Button {
-                            recipe.accentHex = UInt32(hex)
-                        } label: {
-                            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                .fill(Color(hex: UInt32(hex)))
-                                .frame(width: 32, height: 32)
-                                .overlay {
-                                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                        .strokeBorder(recipe.accentHex == UInt32(hex)
-                                                      ? KitInk.primary : .clear, lineWidth: 2)
-                                }
-                        }
-                        .buttonStyle(.plain)
+            if recipe.rows.count < 4 {
+                if !recipe.rows.isEmpty { divider }
+                Button {
+                    withAnimation(.easeOut(duration: 0.15)) {
+                        recipe.rows.append(RecipeRow(label: "LABEL", value: "0", unit: ""))
                     }
-                    field("hex", text: Binding(
-                        get: { String(format: "%06X", recipe.accentHex) },
-                        set: { if let hex = UInt32($0, radix: 16) { recipe.accentHex = hex } }
-                    ))
-                    .frame(width: 90)
+                } label: {
+                    Label("Add a row", systemImage: "plus")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(KitInk.secondary)
+                        .frame(height: 32)
+                        .contentShape(.rect)
                 }
+                .buttonStyle(.plain)
             }
-
-            bottomBar
         }
     }
 
-    private var bottomBar: some View {
-        HStack(spacing: 10) {
-            Button {
-                UIPasteboard.general.string = recipe.written()
-                copied = true
-                note = nil
-                Task {
-                    try? await Task.sleep(for: .seconds(1.5))
-                    copied = false
-                }
-            } label: {
-                chip(copied ? "Copied" : "Copy recipe", on: copied)
-            }
-            .buttonStyle(.plain)
+    // MARK: Material
 
+    private var materialGroup: some View {
+        group("Material", footnote: "The fade reaches zero under the buttons by design. Raise the floor if your card carries text low.") {
+            dial("Top opacity", value: $recipe.material.topOpacity, in: 0...1)
+            divider
+            dial("Fade end", value: $recipe.material.fadeEnd, in: 0.15...1)
+            divider
+            dial("Fade curve", value: $recipe.material.fadeCurve, in: 0.05...4)
+            divider
+            dial("Floor", value: $recipe.material.floor, in: 0...1)
+            divider
+            dial("Corner", value: $recipe.material.corner, in: 8...80, decimals: 0)
+            divider
+            dial("Rim", value: $recipe.material.rim, in: 0...1)
+            divider
+            dial("Well depth", value: $recipe.material.wellDepth, in: 0...1)
+        }
+    }
+
+    // MARK: Accent
+
+    private var accentGroup: some View {
+        group("Accent", footnote: "Spent once, on the eyebrow. One accent is the law.") {
+            HStack(spacing: 10) {
+                ForEach([0xC8B6A0, 0x6F8F6A, 0xC9A26D, 0xB0524A, 0x5C7A9E], id: \.self) { hex in
+                    Button {
+                        recipe.accentHex = UInt32(hex)
+                    } label: {
+                        Circle()
+                            .fill(Color(hex: UInt32(hex)))
+                            .frame(width: 30, height: 30)
+                            .overlay {
+                                Circle().strokeBorder(
+                                    recipe.accentHex == UInt32(hex)
+                                        ? KitInk.primary : .white.opacity(0.10),
+                                    lineWidth: recipe.accentHex == UInt32(hex) ? 2 : 1)
+                            }
+                            .frame(width: 38, height: 38)
+                            .contentShape(.circle)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(String(format: "Accent %06X", hex))
+                }
+                Spacer(minLength: 0)
+                TextField("HEX", text: Binding(
+                    get: { String(format: "%06X", recipe.accentHex) },
+                    set: { if let hex = UInt32($0, radix: 16) { recipe.accentHex = hex } }
+                ))
+                .textFieldStyle(.plain)
+                .font(.system(size: 13, design: .monospaced))
+                .foregroundStyle(KitInk.primary)
+                .multilineTextAlignment(.trailing)
+                .frame(width: 76)
+            }
+        }
+    }
+
+    // MARK: Actions
+
+    private var actionBar: some View {
+        HStack(spacing: 10) {
             PasteButton(payloadType: String.self) { strings in
                 guard let text = strings.first, let pasted = CardRecipe.read(text) else {
                     Task { @MainActor in note = "not a card recipe" }
@@ -176,89 +250,145 @@ struct CardLab: View {
                 }
             }
             .labelStyle(.iconOnly)
-            .buttonBorderShape(.capsule)
+            .buttonBorderShape(.circle)
             .tint(KitInk.bgSurface)
+            .accessibilityLabel("Paste a recipe")
 
             Button {
                 recipe = CardRecipe()
                 RecipeStore.reset()
                 note = "reset to the demo"
             } label: {
-                chip("Reset", on: false)
+                Text("Reset")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(KitInk.secondary)
+                    .padding(.horizontal, 14)
+                    .frame(height: 40)
+                    .background(.white.opacity(0.06), in: Capsule())
+                    .contentShape(.capsule)
             }
             .buttonStyle(.plain)
-
-            Spacer(minLength: 0)
 
             if let note {
                 Text(note)
                     .font(.system(size: 11, design: .monospaced))
                     .foregroundStyle(KitInk.tertiary)
+                    .lineLimit(1)
             }
+
+            Spacer(minLength: 0)
+
+            Button {
+                UIPasteboard.general.string = recipe.written()
+                copied = true
+                note = nil
+                Task {
+                    try? await Task.sleep(for: .seconds(1.5))
+                    copied = false
+                }
+            } label: {
+                Label(copied ? "Copied" : "Copy recipe",
+                      systemImage: copied ? "checkmark" : "doc.on.doc")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(KitInk.bgBase)
+                    .padding(.horizontal, 16)
+                    .frame(height: 40)
+                    .background(KitInk.accent, in: Capsule())
+                    .contentShape(.capsule)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(.ultraThinMaterial)
+        .overlay(alignment: .top) {
+            Rectangle().fill(.white.opacity(0.08)).frame(height: 0.5)
         }
     }
 
     // MARK: Small pieces
 
-    private func section(_ title: String,
-                         @ViewBuilder content: () -> some View) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+    private func group(_ title: String, footnote: String? = nil,
+                       @ViewBuilder content: () -> some View) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
             Text(title.uppercased())
-                .font(.system(size: 11, weight: .bold, design: .monospaced))
-                .tracking(1.2)
+                .font(.system(size: 11, weight: .semibold))
+                .tracking(0.8)
                 .foregroundStyle(KitInk.tertiary)
-            content()
+                .padding(.leading, 2)
+            VStack(alignment: .leading, spacing: 12) {
+                content()
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(KitInk.bgSurface,
+                        in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(.white.opacity(0.06), lineWidth: 1)
+            }
+            if let footnote {
+                Text(footnote)
+                    .font(.system(size: 12))
+                    .foregroundStyle(KitInk.tertiary)
+                    .padding(.leading, 2)
+            }
         }
+    }
+
+    private var divider: some View {
+        Rectangle().fill(.white.opacity(0.06)).frame(height: 0.5)
     }
 
     private func caption(_ text: String) -> some View {
         Text(text)
-            .font(.system(size: 11))
+            .font(.system(size: 12))
             .foregroundStyle(KitInk.tertiary)
     }
 
-    private func labeledField(_ title: String, text: Binding<String>) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+    private func field(_ title: String, text: Binding<String>,
+                       footnote: String? = nil) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
             caption(title)
-            field(title, text: text)
+            TextField(title, text: text)
+                .textFieldStyle(.plain)
+                .font(.system(size: 15))
+                .foregroundStyle(KitInk.primary)
+            if let footnote {
+                Text(footnote)
+                    .font(.system(size: 11))
+                    .foregroundStyle(KitInk.tertiary.opacity(0.8))
+            }
         }
     }
 
-    private func field(_ placeholder: String, text: Binding<String>) -> some View {
+    private func bareField(_ placeholder: String, text: Binding<String>,
+                           mono: Bool = false) -> some View {
         TextField(placeholder, text: text)
             .textFieldStyle(.plain)
-            .font(.system(size: 14))
-            .padding(10)
-            .background(KitInk.bgSurface,
+            .font(mono ? .system(size: 14, design: .monospaced) : .system(size: 15))
+            .foregroundStyle(KitInk.primary)
+            .padding(.horizontal, 10)
+            .frame(height: 36)
+            .background(.black.opacity(0.35),
                         in: RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
     private func dial(_ title: String, value: Binding<Double>,
-                      in range: ClosedRange<Double>, step: Double,
-                      decimals: Int = 2) -> some View {
-        HStack(spacing: 10) {
+                      in range: ClosedRange<Double>, decimals: Int = 2) -> some View {
+        HStack(spacing: 12) {
             Text(title)
-                .font(.system(size: 13))
+                .font(.system(size: 14))
                 .foregroundStyle(KitInk.secondary)
-                .frame(width: 96, alignment: .leading)
+                .frame(width: 92, alignment: .leading)
             Slider(value: value, in: range)
                 .tint(KitInk.accent)
             Text(String(format: "%.\(decimals)f", value.wrappedValue))
                 .font(.system(size: 12, design: .monospaced))
                 .monospacedDigit()
                 .foregroundStyle(KitInk.primary)
-                .frame(width: 44, alignment: .trailing)
+                .frame(width: 42, alignment: .trailing)
         }
-    }
-
-    private func chip(_ title: String, on: Bool) -> some View {
-        Text(title)
-            .font(.system(size: 13, weight: .medium))
-            .foregroundStyle(on ? KitInk.bgBase : KitInk.secondary)
-            .padding(.horizontal, 14)
-            .frame(height: 34)
-            .background(on ? KitInk.accent : KitInk.bgSurface, in: Capsule())
-            .contentShape(.capsule)
     }
 }
 
