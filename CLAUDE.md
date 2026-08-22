@@ -20,3 +20,6 @@ Repo-specific notes for Claude Code:
 - Simulator screenshots cannot prove glass or platter behavior. When a
   rendering question depends on the device, say so plainly instead of
   asserting from a sim render.
+
+- Read STATUS.md at the start of a session: it carries the working state
+  and the open decisions that live outside this repo's code.
