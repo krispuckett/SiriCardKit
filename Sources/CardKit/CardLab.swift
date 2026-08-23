@@ -657,7 +657,7 @@ struct CardLab: View {
             }
             .labelStyle(.iconOnly)
             .buttonBorderShape(.capsule)
-            .tint(KitInk.bgSurface)
+            .tint(.white.opacity(0.08))
             .accessibilityLabel("Paste a recipe")
 
             Spacer(minLength: 0)
@@ -692,11 +692,26 @@ struct CardLab: View {
             }
             .buttonStyle(.plain)
         }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(KitInk.bgSurface, in: Capsule())
+        .overlay {
+            Capsule().strokeBorder(.white.opacity(0.08), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(0.45), radius: 16, y: 6)
         .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .background(.ultraThinMaterial)
-        .overlay(alignment: .top) {
-            Rectangle().fill(.white.opacity(0.08)).frame(height: 0.5)
+        .padding(.top, 6)
+        .padding(.bottom, 2)
+        .frame(maxWidth: .infinity)
+        .background {
+            // The floating toolbar sits on a fade, not a band: content
+            // melts into the ground before it reaches the controls.
+            LinearGradient(stops: [
+                .init(color: KitInk.bgBase.opacity(0), location: 0),
+                .init(color: KitInk.bgBase, location: 0.5),
+            ], startPoint: .top, endPoint: .bottom)
+            .padding(.top, -28)
+            .ignoresSafeArea()
         }
     }
 
