@@ -20,7 +20,29 @@ import SwiftUI
 // MARK: - Blocks
 
 enum BlockKind: String, Codable, CaseIterable {
-    case eyebrow, headline, row, sentence, chip, footnote, wells
+    case eyebrow, headline, row, columns, sentence, chip, footnote, wells
+}
+
+/// One cell of the columns block: a value that reads big and the label
+/// beneath it. Three cells at most; 340 points divides no further.
+struct ColumnCell: Codable, Equatable, Identifiable {
+    var id = UUID()
+    var label = ""
+    var value = ""
+
+    private enum CodingKeys: String, CodingKey { case id, label, value }
+
+    init(label: String = "", value: String = "") {
+        self.label = label
+        self.value = value
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        label = try c.decodeIfPresent(String.self, forKey: .label) ?? ""
+        value = try c.decodeIfPresent(String.self, forKey: .value) ?? ""
+    }
 }
 
 /// One block on the canvas. Storage is flat on purpose: every kind reads
@@ -35,14 +57,15 @@ struct CardBlock: Codable, Equatable, Identifiable {
     var unit = ""        // row
     var primary = ""     // wells
     var secondary = ""   // wells
+    var cells: [ColumnCell] = []  // columns
 
     private enum CodingKeys: String, CodingKey {
-        case id, kind, text, label, value, unit, primary, secondary
+        case id, kind, text, label, value, unit, primary, secondary, cells
     }
 
     init(kind: BlockKind, text: String = "", label: String = "",
          value: String = "", unit: String = "", primary: String = "",
-         secondary: String = "") {
+         secondary: String = "", cells: [ColumnCell] = []) {
         self.kind = kind
         self.text = text
         self.label = label
@@ -50,6 +73,7 @@ struct CardBlock: Codable, Equatable, Identifiable {
         self.unit = unit
         self.primary = primary
         self.secondary = secondary
+        self.cells = cells
     }
 
     init(from decoder: Decoder) throws {
@@ -62,6 +86,7 @@ struct CardBlock: Codable, Equatable, Identifiable {
         unit = try c.decodeIfPresent(String.self, forKey: .unit) ?? ""
         primary = try c.decodeIfPresent(String.self, forKey: .primary) ?? ""
         secondary = try c.decodeIfPresent(String.self, forKey: .secondary) ?? ""
+        cells = try c.decodeIfPresent([ColumnCell].self, forKey: .cells) ?? []
     }
 }
 
@@ -77,6 +102,10 @@ extension CardBlock {
     static func wells(primary: String, secondary: String = "") -> CardBlock {
         .init(kind: .wells, primary: primary, secondary: secondary)
     }
+    static func columns(_ cells: [(String, String)]) -> CardBlock {
+        .init(kind: .columns,
+              cells: cells.map { ColumnCell(label: $0.0, value: $0.1) })
+    }
 }
 
 // MARK: - The laws, as rails
@@ -87,6 +116,7 @@ extension CardBlock {
 /// `normalized` so a paste or an agent cannot smuggle in an illegal card.
 enum CardLaw {
     static let maxRows = 4
+    static let maxColumnCells = 3
 
     static func limit(for kind: BlockKind) -> Int {
         kind == .row ? maxRows : 1
@@ -100,6 +130,7 @@ enum CardLaw {
     static func refusal(for kind: BlockKind) -> String {
         switch kind {
         case .row: "Four rows is the ceiling. A card is read, not scrolled."
+        case .columns: "One columns block, three cells at most."
         case .headline: "One headline wins the glance."
         case .sentence: "One sentence at most, and it earns its place."
         case .wells: "Two wells maximum, in one block, always last."
@@ -109,15 +140,19 @@ enum CardLaw {
         }
     }
 
-    /// First-wins caps, wells pinned last. Order is otherwise preserved.
+    /// First-wins caps, wells pinned last, column cells trimmed to three.
+    /// Order is otherwise preserved.
     static func normalized(_ blocks: [CardBlock]) -> [CardBlock] {
         var counts: [BlockKind: Int] = [:]
         var kept: [CardBlock] = []
         var wells: CardBlock?
-        for block in blocks {
+        for var block in blocks {
             let seen = counts[block.kind, default: 0]
             guard seen < limit(for: block.kind) else { continue }
             counts[block.kind] = seen + 1
+            if block.kind == .columns {
+                block.cells = Array(block.cells.prefix(maxColumnCells))
+            }
             if block.kind == .wells { wells = block } else { kept.append(block) }
         }
         if let wells { kept.append(wells) }
@@ -268,6 +303,10 @@ extension CardRecipe {
             case .eyebrow: out.append("eyebrow: \(block.text)")
             case .headline: out.append("headline: \(block.text)")
             case .row: out.append("row: \(block.label) | \(block.value) | \(block.unit)")
+            case .columns:
+                out.append("columns: " + block.cells
+                    .map { "\($0.label) | \($0.value)" }
+                    .joined(separator: " || "))
             case .sentence: out.append("line: \(block.text)")
             case .chip: out.append("chip: \(block.text)")
             case .footnote: out.append("note: \(block.text)")
@@ -348,6 +387,16 @@ extension CardRecipe {
                     ))
                     sawAnything = true
                 }
+            case "columns":
+                let cells = value.components(separatedBy: "||")
+                    .map { cell -> (String, String) in
+                        let parts = cell.split(separator: "|", omittingEmptySubsequences: false)
+                            .map { $0.trimmingCharacters(in: .whitespaces) }
+                        return (parts.first ?? "", parts.count > 1 ? parts[1] : "")
+                    }
+                    .filter { !$0.0.isEmpty || !$0.1.isEmpty }
+                if !cells.isEmpty { blocks.append(.columns(cells)) }
+                sawAnything = true
             case "line":
                 if !value.isEmpty { blocks.append(.sentence(value)) }
                 sawAnything = true

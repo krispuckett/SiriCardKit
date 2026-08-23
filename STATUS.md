@@ -45,6 +45,16 @@ human or agent. Update this file when either changes.
   blocks: state chip and mono footnote. Verified in the simulator
   (regression on presets, legacy decode, chip card, selection); the
   canvas has not yet been judged on device.
+- Layout vocabulary + undo shipped (2026-08-23): a columns block (up to
+  three stat cells, value big over label; `columns: LABEL | value ||
+  ...` in text), the paired header line (a chip directly after the
+  eyebrow shares its line, trailing; adjacency is layout), and undo in
+  the top bar (coalesced snapshots, press-and-hold for redo). Free-grid
+  placement was considered and rejected on purpose: stack laws are the
+  product. Columns values sit at 22pt against the 28pt headline; law 10
+  reworded from "2x the scale" to "wins the glance" with columns as the
+  only element allowed near headline scale. Judge that hierarchy on the
+  stage and device.
 
 ## Open decisions (the owner's, not an agent's)
 

@@ -9,10 +9,13 @@ Each preset already obeys the laws (one headline, shared rails, at most
 one sentence, two wells, the accent spent once), so what you start from
 is already a card. Tune it in the lab; do not design in the text.
 
-A recipe reads in order: line order is block order on the card. Two
+A recipe reads in order: line order is block order on the card. Three
 keys beyond what these presets use: `chip:` adds a state chip (it wears
-the accent and the eyebrow drops to ink), and `note:` adds a quiet mono
-footnote. The wells (`primary:`, `secondary:`) always render last.
+the accent and the eyebrow drops to ink; placed directly after
+`eyebrow:` it shares that line, trailing), `note:` adds a quiet mono
+footnote, and `columns: LABEL | value || LABEL | value` adds up to
+three side-by-side stats, value big with the label beneath. The wells
+(`primary:`, `secondary:`) always render last.
 
 ## The demo brief
 

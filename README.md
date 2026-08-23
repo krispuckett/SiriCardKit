@@ -18,9 +18,9 @@ device.
 The demo app IS a design tool. Open it and you are in the **Card Lab**:
 your card rendered live on the light platter Siri actually hosts cards
 on. The card is a **canvas of blocks** (eyebrow, headline, metric rows,
-a sentence, a state chip, a footnote, the action wells): tap a block on
-the card to edit it in place, move it, or remove it, and add whatever
-the composition laws still allow. The laws are rails, not homework: a
+stat columns, a sentence, a state chip, a footnote, the action wells):
+tap a block on the card to edit it, move it, or remove it, and add
+whatever the composition laws still allow. Undo has your back. The laws are rails, not homework: a
 second headline cannot exist, the wells never leave the bottom, and the
 accent spends itself exactly once. Material dials and the accent sit
 beneath. Every edit saves a **recipe** (the ordered block list), and the

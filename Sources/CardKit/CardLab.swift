@@ -28,6 +28,13 @@ struct CardLab: View {
     @State private var cardHeight: CGFloat = 0
     @FocusState private var typing: Bool
 
+    // Undo: snapshots of the recipe, coalesced so a burst of typing or a
+    // slider drag is one step back, not forty.
+    @State private var history: [CardRecipe] = []
+    @State private var future: [CardRecipe] = []
+    @State private var lastSnapshotAt: Date = .distantPast
+    @State private var timeTraveling = false
+
     var body: some View {
         VStack(spacing: 0) {
             topBar
@@ -39,8 +46,19 @@ struct CardLab: View {
         .safeAreaInset(edge: .bottom) { actionBar }
         .overlay(alignment: .bottom) { toastView }
         .preferredColorScheme(.dark)
-        .onChange(of: recipe) { _, newValue in
+        .onChange(of: recipe) { oldValue, newValue in
             RecipeStore.save(newValue)
+            if timeTraveling {
+                timeTraveling = false
+            } else {
+                future.removeAll()
+                let now = Date()
+                if now.timeIntervalSince(lastSnapshotAt) > 1.0 {
+                    history.append(oldValue)
+                    if history.count > 50 { history.removeFirst() }
+                }
+                lastSnapshotAt = now
+            }
         }
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
@@ -58,10 +76,26 @@ struct CardLab: View {
             Text("Card Lab")
                 .font(.system(size: 20, weight: .bold))
                 .foregroundStyle(KitInk.primary)
-            Text("tap the card to edit it")
+            Text("tap the card")
                 .font(.system(size: 12))
                 .foregroundStyle(KitInk.tertiary)
             Spacer(minLength: 0)
+            Menu {
+                Button("Redo") { redo() }
+                    .disabled(future.isEmpty)
+            } label: {
+                Image(systemName: "arrow.uturn.backward")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(history.isEmpty
+                                     ? KitInk.tertiary.opacity(0.4) : KitInk.secondary)
+                    .frame(width: 34, height: 30)
+                    .background(.white.opacity(0.06), in: Capsule())
+                    .hitTarget(pad: 7)
+            } primaryAction: {
+                undo()
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Undo. Press and hold for redo.")
             Menu {
                 ForEach(CardPreset.allCases) { preset in
                     Button(preset.title) { apply(preset) }
@@ -332,6 +366,39 @@ struct CardLab: View {
                 bareField("unit", text: block.unit, mono: true)
                     .frame(width: 54)
             }
+        case .columns:
+            ForEach(block.cells) { $cell in
+                HStack(spacing: 10) {
+                    bareField("LABEL", text: $cell.label, mono: true)
+                        .frame(width: 86)
+                    bareField("Value", text: $cell.value, mono: true)
+                    if recipe.blocks[index].cells.count > 1 {
+                        Button {
+                            removeCell(blockIndex: index, id: cell.id)
+                        } label: {
+                            Image(systemName: "minus.circle.fill")
+                                .font(.system(size: 17))
+                                .foregroundStyle(KitInk.tertiary)
+                                .frame(width: 44, height: 44)
+                                .contentShape(.rect)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Remove the \(cell.label) cell")
+                    }
+                }
+            }
+            if recipe.blocks[index].cells.count < CardLaw.maxColumnCells {
+                Button {
+                    addCell(blockIndex: index)
+                } label: {
+                    Label("Add a cell", systemImage: "plus")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(KitInk.secondary)
+                        .frame(height: 32)
+                        .hitTarget(pad: 6)
+                }
+                .buttonStyle(.plain)
+            }
         case .chip:
             field("Chip", text: block.text, prompt: "LIVE")
         case .footnote:
@@ -360,7 +427,8 @@ struct CardLab: View {
 
     private func editorLaw(for kind: BlockKind) -> String? {
         switch kind {
-        case .chip: "The chip wears the accent; the eyebrow drops to ink while one exists."
+        case .chip: "Wears the accent; the eyebrow drops to ink. Placed right after the eyebrow, it shares its line, trailing."
+        case .columns: "Three cells at most. 340 points divides no further."
         case .row: "Rows share rails: values right-aligned, mono, no meters."
         case .wells: "The wells stay last. The fade reaches zero only beneath them."
         case .sentence: "Whole sentences, excerpted to a budget. Never a cut thought."
@@ -375,6 +443,10 @@ struct CardLab: View {
         case .row:
             "\(block.label)  \(block.value) \(block.unit)"
                 .trimmingCharacters(in: .whitespaces)
+        case .columns:
+            block.cells
+                .map { "\($0.label) \($0.value)".trimmingCharacters(in: .whitespaces) }
+                .joined(separator: "  ·  ")
         case .wells:
             block.secondary.isEmpty ? block.primary
                                     : "\(block.primary)  ·  \(block.secondary)"
@@ -419,6 +491,7 @@ struct CardLab: View {
         case .eyebrow: .eyebrow("TODAY")
         case .headline: .headline("Headline")
         case .row: .row("LABEL", "0", "")
+        case .columns: .columns([("LABEL", "0"), ("LABEL", "0")])
         case .sentence: .sentence("One thought, whole sentences.")
         case .chip: .chip("LIVE")
         case .footnote: .footnote("Updated just now")
@@ -448,6 +521,44 @@ struct CardLab: View {
             recipe.blocks.removeAll { $0.id == id }
             selection = nil
         }
+    }
+
+    private func addCell(blockIndex: Int) {
+        guard recipe.blocks[blockIndex].cells.count < CardLaw.maxColumnCells else { return }
+        haptic()
+        withAnimation(.easeOut(duration: 0.2)) {
+            recipe.blocks[blockIndex].cells.append(ColumnCell(label: "LABEL", value: "0"))
+        }
+    }
+
+    private func removeCell(blockIndex: Int, id: UUID) {
+        guard recipe.blocks[blockIndex].cells.count > 1 else { return }
+        haptic()
+        withAnimation(.easeOut(duration: 0.2)) {
+            recipe.blocks[blockIndex].cells.removeAll { $0.id == id }
+        }
+    }
+
+    // MARK: Undo
+
+    private func undo() {
+        var previous: CardRecipe?
+        while let candidate = history.popLast() {
+            if candidate != recipe { previous = candidate; break }
+        }
+        guard let previous else { return }
+        haptic()
+        future.append(recipe)
+        timeTraveling = true
+        withAnimation(.easeOut(duration: 0.2)) { recipe = previous }
+    }
+
+    private func redo() {
+        guard let next = future.popLast() else { return }
+        haptic()
+        history.append(recipe)
+        timeTraveling = true
+        withAnimation(.easeOut(duration: 0.2)) { recipe = next }
     }
 
     // MARK: Material and accent
@@ -756,6 +867,7 @@ extension BlockKind {
         case .eyebrow: "Eyebrow"
         case .headline: "Headline"
         case .row: "Row"
+        case .columns: "Columns"
         case .sentence: "Sentence"
         case .chip: "Chip"
         case .footnote: "Footnote"

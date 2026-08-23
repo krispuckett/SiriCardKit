@@ -38,19 +38,63 @@ struct SiriCard: View {
     }
 
     var body: some View {
-        let blocks = visibleBlocks
+        let units = renderUnits
         VStack(alignment: .leading, spacing: 0) {
-            ForEach(Array(blocks.enumerated()), id: \.element.id) { index, block in
-                selectable(block) {
-                    blockView(block)
-                }
-                .padding(.top, index == 0 ? 0 : gap(from: blocks[index - 1].kind,
-                                                    to: block.kind))
+            ForEach(Array(units.enumerated()), id: \.element.id) { index, unit in
+                unitView(unit)
+                    .padding(.top, index == 0 ? 0 : gap(from: units[index - 1].lead.kind,
+                                                        to: unit.lead.kind))
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(24)
         .cardMaterial(recipe.material)
+    }
+
+    /// A chip directly after the eyebrow shares its line, trailing: order
+    /// is layout, and adjacency is the pairing. Everything else renders
+    /// as its own line of the stack.
+    private struct RenderUnit: Identifiable {
+        let lead: CardBlock
+        let trailingChip: CardBlock?
+        var id: UUID { lead.id }
+    }
+
+    private var renderUnits: [RenderUnit] {
+        let blocks = visibleBlocks
+        var out: [RenderUnit] = []
+        var i = 0
+        while i < blocks.count {
+            if blocks[i].kind == .eyebrow, i + 1 < blocks.count,
+               blocks[i + 1].kind == .chip {
+                out.append(RenderUnit(lead: blocks[i], trailingChip: blocks[i + 1]))
+                i += 2
+            } else {
+                out.append(RenderUnit(lead: blocks[i], trailingChip: nil))
+                i += 1
+            }
+        }
+        return out
+    }
+
+    @ViewBuilder
+    private func unitView(_ unit: RenderUnit) -> some View {
+        if let chip = unit.trailingChip {
+            HStack(alignment: .center, spacing: 12) {
+                selectable(unit.lead, fullWidth: false) {
+                    blockView(unit.lead)
+                }
+                Spacer(minLength: 0)
+                selectable(chip, fullWidth: false) {
+                    blockView(chip)
+                }
+            }
+            .frame(maxWidth: .infinity)
+        } else {
+            selectable(unit.lead) {
+                blockView(unit.lead)
+            }
+        }
     }
 
     // MARK: Rhythm
@@ -86,6 +130,24 @@ struct SiriCard: View {
         case .row:
             CardMetricRow(label: block.label, value: block.value, unit: block.unit,
                           showsUnitRail: hasUnitRail)
+        case .columns:
+            HStack(alignment: .top, spacing: 12) {
+                ForEach(block.cells) { cell in
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(cell.value)
+                            .font(.system(size: 22, weight: .semibold, design: .monospaced))
+                            .monospacedDigit()
+                            .foregroundStyle(KitInk.primary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                        Text(cell.label.uppercased())
+                            .font(.system(size: 11, weight: .medium, design: .monospaced))
+                            .tracking(1.2)
+                            .foregroundStyle(KitInk.tertiary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
         case .sentence:
             Text(sentenceText(block) ?? "One thought, whole sentences")
                 .font(.system(size: 15))
@@ -150,6 +212,7 @@ struct SiriCard: View {
         case .eyebrow, .headline, .chip, .footnote: !block.text.isEmpty
         case .sentence: sentenceText(block) != nil
         case .row: !(block.label.isEmpty && block.value.isEmpty)
+        case .columns: block.cells.contains { !$0.label.isEmpty || !$0.value.isEmpty }
         case .wells: !(block.primary.isEmpty && block.secondary.isEmpty)
         }
     }
@@ -175,7 +238,7 @@ struct SiriCard: View {
     // MARK: Canvas affordances
 
     @ViewBuilder
-    private func selectable(_ block: CardBlock,
+    private func selectable(_ block: CardBlock, fullWidth: Bool = true,
                             @ViewBuilder content: () -> some View) -> some View {
         if let onBlockTap {
             content()
@@ -186,7 +249,7 @@ struct SiriCard: View {
                             .padding(-6)
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(maxWidth: fullWidth ? .infinity : nil, alignment: .leading)
                 .contentShape(.rect)
                 .onTapGesture { onBlockTap(block.id) }
         } else {

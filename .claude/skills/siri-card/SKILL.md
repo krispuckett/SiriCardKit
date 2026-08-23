@@ -22,8 +22,13 @@ the person tuned it by eye in the Card Lab. A recipe is an ORDERED LIST OF
 BLOCKS: line order is render order. Grammar:
 
 - One block per line, in order: `eyebrow:`, `headline:`, `row: LABEL |
-  value | unit`, `line:` (the sentence), `chip:` (the state chip),
-  `note:` (the footnote). An empty or absent value is an absent block.
+  value | unit`, `columns: LABEL | value || LABEL | value` (two or
+  three stat cells, value big with the label beneath), `line:` (the
+  sentence), `chip:` (the state chip), `note:` (the footnote). An empty
+  or absent value is an absent block.
+- Adjacency is layout: a `chip:` line directly after `eyebrow:` shares
+  the eyebrow's line, trailing right. Anywhere else the chip is its own
+  line.
 - `primary:` and `secondary:` form the wells block, which renders last
   wherever those lines appear.
 - `accent:` is 6 hex digits, then a `material:` block of dials
@@ -88,12 +93,13 @@ only the person can answer; ask.
 10. Fixed point sizes, not Dynamic Type styles: a snippet is a fixed
     canvas. Headline near 28 semibold, values 16 mono, labels 11 to 12
     mono, body 15. Minimum text size is 11.
-11. Composition: one headline wins the glance at 2x the scale of anything
-    else; metric rows are label, value, unit on shared rails with values
-    right-aligned in monospaced digits; at most one sentence of prose; at
-    most two action wells, always last; the accent color appears exactly
-    once (the state chip wears it when one exists, the eyebrow
-    otherwise).
+11. Composition: one headline wins the glance; metric rows are label,
+    value, unit on shared rails with values right-aligned in monospaced
+    digits; stat columns come as one block of at most three cells and
+    are the only element allowed near the headline's scale; at most one
+    sentence of prose; at most two action wells, always last; the accent
+    color appears exactly once (the state chip wears it when one exists,
+    the eyebrow otherwise).
 
 ## Phrases and metadata
 
