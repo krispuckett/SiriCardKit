@@ -3,6 +3,10 @@
 Build a designed, interactive Siri card for your iOS app, with an AI agent
 doing the typing.
 
+<p align="center">
+  <img src="docs/media/lab.png" width="340" alt="The Card Lab: a Siri card with a live chip, stat columns, and action wells on the light platter, its blocks listed beneath">
+</p>
+
 iOS 26 gave apps interactive Siri snippets: real cards with live buttons
 that Siri and Spotlight present when someone asks about your app. Apple's
 documentation teaches the API. This kit teaches the part that is not
@@ -27,6 +31,12 @@ beneath. Every edit saves a **recipe** (the ordered block list), and the
 demo's own Siri intent renders whatever you last designed, so you can
 put down the lab, ask Siri, and see YOUR card in the real surface before
 a line of code exists.
+
+<p align="center">
+  <img src="docs/media/editor.png" width="300" alt="Tap a block to edit it: the headline selected on the card, its editor and move controls beneath">
+  &nbsp;&nbsp;
+  <img src="docs/media/recipes.gif" width="300" alt="One tool, five recipes: the lab wearing the demo brief, the stats card, the words-only card, the confirmation card, and the columns card in turn">
+</p>
 
 When the design settles, **Copy recipe** puts it on the pasteboard as
 plain text. That text is the handshake: paste it back into the lab to

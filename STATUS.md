@@ -71,10 +71,33 @@ human or agent. Update this file when either changes.
   feature to the buyer's OWN app. The demo never ships to the App Store
   (guidelines 4.2.6 and 4.3a treat commercialized template apps as spam).
 
-## Near-term ideas, unranked
+## The road to 10/10, ranked (direction approved 2026-08-23)
 
-- A recipes gallery in the lab (saved designs, not just the one).
-- Accent-aware platter variants for judging on brighter and darker
-  wallpapers.
-- The agent test loop: a scripted check that a generated card still
-  builds and obeys the rules.
+Three pillars: the canvas earns the word, testing becomes an
+instrument, the handoff finishes the job. In impact order:
+
+1. Stress states on the stage: Longest and Empty next to Fresh and
+   Snoozed, honest fixtures, and the fold meter grown into a laws bar
+   (fold, ink-over-fade, floor) so shippable is a row of green lights.
+2. Inline editing: tap the headline, the cursor lands IN the headline
+   on the card. The field must be pixel-identical to the text it
+   replaces. The biggest feel unlock and the hardest single item.
+3. The first minute: on first launch, teach the loop viscerally
+   ("this card is already live; ask Siri").
+4. The judging strip: the card across four platter lights side by
+   side, one tap to export the strip as a PNG (also the share asset).
+5. Long-press drag to reorder blocks on the card, springs, wells
+   pinned; replaces the inspector arrows.
+6. The laws ledger: replace the settings-y blocks list with an
+   instrument readout of what is spent and what remains.
+7. Skill file templates: recipe to working card in ANY repo with zero
+   kit files present; kills the "move the files" step.
+8. The agent test loop: recipe lint plus law assertions an agent can
+   run after generating a card.
+9. A recipes gallery (saved designs, variants, A/B), which also feeds
+   stress testing.
+10. ShareLink on recipes (phone to Mac without Universal Clipboard).
+
+Rejected on purpose: free-grid placement, font pickers, second
+accents, in-app AI generation. Vocabulary over freedom; the rails are
+the product.
