@@ -8,9 +8,9 @@ doing the typing.
 </p>
 
 iOS 26 gave apps interactive Siri snippets: cards with live buttons,
-shown when someone asks Siri about your app. Apple's docs teach the
-API. This kit teaches the rest: cards that look designed, and the
-failures the simulator hides.
+shown when someone asks Siri about your app. It can be a little weird designing for these, 
+so I made a jig for myself to see and feel the cards, then I can pass the parameters back
+to my coding agent. 
 
 Everything here came from a production app, verified on device.
 
@@ -18,16 +18,10 @@ Everything here came from a production app, verified on device.
 
 The demo app is the design tool. Your card sits on the light background
 Siri actually uses; tap anything on it to change it. The rules are
-built in: one headline, four rows max, buttons at the bottom. There's
-undo.
+built in: one headline, four rows max, buttons at the bottom. You can experiment with these, 
+or have your agent add more parameters as you need. 
 
-Two looks: dark ink you can tint toward a brand color, or glass, where
-the card goes clear and the text flips dark. Pick a color too bright
-and the lab darkens it until the words read.
-
-Every change saves as a **recipe**, and the demo's Siri intent reads
-it. Say "Daily brief in Card Kit" and Siri shows the card you just
-made. No code yet.
+Every change saves as a **recipe** you can pass back to your coding platform.
 
 <p align="center">
   <img src="docs/media/editor.png" width="300" alt="Tap a block to edit it: the headline selected on the card, its editor and move controls beneath">
@@ -36,7 +30,7 @@ made. No code yet.
 </p>
 
 When the design settles, **Copy recipe** puts it on the pasteboard as
-plain text. That text is the handshake: paste it back into the lab to
+plain text. Pastd it back into the lab to
 restore a design, or paste it to Claude Code, Codex, or Cursor with the
 prompt in `PROMPTS.md`, and the agent builds the card into your own app
 with your exact numbers and words.
@@ -108,7 +102,7 @@ the reasons.
 It does not ship an app for you. The demo target exists to host the card
 while you design; the card belongs inside your own app. Do not submit the
 demo to the App Store: Apple's guidelines (4.2.6, 4.3a) treat
-commercialized template apps as spam, and they are right to.
+commercialized template apps as spam.
 
 ## Requirements
 
