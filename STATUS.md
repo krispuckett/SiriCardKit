@@ -5,6 +5,10 @@ human or agent. Update this file when either changes.
 
 ## Where it stands
 
+- Shipped 2026-08-24: pushed public to GitHub as SiriCardKit, MIT.
+  The owner's device pass (especially the glass finish) remains the
+  standing to-do; findings land here.
+
 - v1 shipped: the card, the material (shaped fade, no-glass law), the
   carved wells, the intent trio, the device-truth checklist, the agent
   rules, the prompt.
