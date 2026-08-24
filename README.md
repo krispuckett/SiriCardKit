@@ -19,25 +19,22 @@ device.
 
 ## How it works: design in the thing
 
-The demo app IS a design tool. Open it and you are in the **Card Lab**,
-your card rendered live on the light platter Siri actually hosts cards
-on. The card is a canvas of blocks: eyebrow, headline, metric rows,
-stat columns, a sentence, a state chip, a footnote, the action wells.
-Tap a block on the card to edit it, and the add row offers whatever the
-composition laws still allow. A second headline cannot exist, the wells
-never leave the bottom, and the accent spends itself exactly once.
-Undo has your back.
+The demo app is the design tool. Run it and your card sits at the top
+of the screen, on the same light background Siri actually uses. Tap
+anything on the card to change it: the headline, a row, a button. Add
+what you want from the row beneath. The lab enforces the rules that
+make these cards work on a real device, so you get one headline, four
+rows at most, and the buttons stay at the bottom. There's undo.
 
-The material comes in two finishes. Ink is the dark card, tintable to
-your brand's hue; glass hands the card to the system's own material and
-flips the words to dark ink. Either way the kit clamps ink and accent
-until every word survives, so your brand arrives as hue, accent, and
-voice, and an unreadable card cannot exist.
+The card has two looks. Dark ink, which you can tint toward a brand
+color, or glass, where the card goes clear and the text flips dark so
+it holds up on Siri's light sheet. Pick an ink or accent that's too
+bright and the lab pulls it down until the words still read.
 
-Every edit saves a **recipe**, the ordered block list, and the demo's
-own Siri intent renders whatever you last designed. Put down the lab,
-ask Siri, and see YOUR card in the real surface before a line of code
-exists.
+Every change saves as a **recipe**, and the demo's own Siri intent
+reads that recipe. So put the lab down, say "Daily brief in Card Kit",
+and Siri shows the card you just made. You haven't written any code
+yet.
 
 <p align="center">
   <img src="docs/media/editor.png" width="300" alt="Tap a block to edit it: the headline selected on the card, its editor and move controls beneath">
