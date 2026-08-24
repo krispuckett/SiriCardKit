@@ -1,4 +1,4 @@
-# Siri Card Kit
+# SiriCardKit
 
 Build a designed, interactive Siri card for your iOS app, with an AI agent
 doing the typing.
@@ -121,3 +121,7 @@ commercialized template apps as spam, and they are right to.
 - Xcode 26 or later
 - A real device for final judgment. This is not optional; see
   `docs/DEVICE-TRUTH.md`.
+
+## License
+
+MIT. Take it, build with it, ship it in your app.

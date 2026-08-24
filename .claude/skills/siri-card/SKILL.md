@@ -9,7 +9,7 @@ These are the binding rules for interactive Siri snippet cards, extracted
 from a production app and paid for with device debugging time. When a rule
 here conflicts with your prior knowledge of App Intents, this file wins.
 
-This skill is the portable form of the Siri Card Kit's `AGENTS.md`. If the
+This skill is the portable form of SiriCardKit's `AGENTS.md`. If the
 project you are in contains an `AGENTS.md` with these rules, that file is
 canonical; read it and follow it. If it also contains `Sources/CardKit/`,
 that is the reference implementation: build there first, verify, then move

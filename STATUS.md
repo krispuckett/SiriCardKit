@@ -56,14 +56,19 @@ human or agent. Update this file when either changes.
   only element allowed near headline scale. Judge that hierarchy on the
   stage and device.
 
-## Open decisions (the owner's, not an agent's)
+## Decided (2026-08-24)
 
-- The product's real name. The repo slug is a placeholder; renaming on
-  GitHub redirects cleanly.
-- Public and free, or private and paid. No LICENSE file is committed on
-  purpose: if it ever sells, do NOT use MIT (it permits resale); use a
-  standard non-exclusive kit license, updates through iOS 28 rather than
-  lifetime.
+- The name is SiriCardKit. README and the skill carry it; the GitHub
+  repo rename (siri-card-kit -> SiriCardKit) is the owner's click and
+  redirects cleanly.
+- Public and free, MIT. LICENSE is committed. The old warning about MIT
+  and resale is moot: free forever was chosen on purpose.
+
+## Open, the owner's
+
+- The device pass on the canvas era (canvas, chip, footnote, columns,
+  paired line) through a real Siri ask; the last blocker before the
+  share. docs/DEVICE-TRUTH.md is the walk.
 - The loop video: a short screen recording of design-in-lab, ask Siri,
   copy recipe, agent builds it. It is the strongest possible marketing
   asset and only the owner can record it.
