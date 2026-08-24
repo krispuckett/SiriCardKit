@@ -17,6 +17,12 @@ footnote, and `columns: LABEL | value || LABEL | value` adds up to
 three side-by-side stats, value big with the label beneath. The wells
 (`primary:`, `secondary:`) always render last.
 
+The material has two finishes. `finish: ink` is the dark card; its hue
+can be tinted with `ink:` (six hex digits, clamped dark so the words
+always survive). `finish: glass` is the full-glass card: a white frost
+over the system's own material, the whole foreground flipped to dark
+ink, the accent worn darkened. Same laws, no glass API, ever.
+
 ## The demo brief
 
 The kit's default: three rows, a sentence, two wells.
@@ -33,6 +39,8 @@ primary: Start focus
 secondary: Snooze it
 accent: C8B6A0
 material:
+  finish: ink
+  ink: 0A0A0B
   topOpacity: 0.95
   fadeEnd: 0.85
   fadeCurve: 0.35
@@ -59,6 +67,8 @@ primary: Open the log
 secondary:
 accent: 5C7A9E
 material:
+  finish: ink
+  ink: 0A0A0B
   topOpacity: 0.95
   fadeEnd: 0.85
   fadeCurve: 0.35
@@ -82,6 +92,8 @@ primary: Start wind down
 secondary: Skip tonight
 accent: C9A26D
 material:
+  finish: ink
+  ink: 0A0A0B
   topOpacity: 0.95
   fadeEnd: 0.85
   fadeCurve: 0.35
@@ -107,7 +119,38 @@ primary: Add to calendar
 secondary: Undo
 accent: 6F8F6A
 material:
+  finish: ink
+  ink: 0A0A0B
   topOpacity: 0.95
+  fadeEnd: 0.85
+  fadeCurve: 0.35
+  floor: 0.00
+  corner: 42
+  rim: 1.00
+  wellDepth: 0.73
+```
+
+## The glass card
+
+The full-glass card: the system's material does the work, the card
+carries only a frost, and the ink flips dark. The register for
+schedule, next-up, and anything that should feel like it belongs to
+the sheet itself.
+
+```
+// Siri card recipe
+eyebrow: UP NEXT
+headline: Design crit
+row: WHEN | 2:00 | pm
+row: WITH | Maya + 3 |
+note: Starts in 20 minutes.
+primary: Join
+secondary: Push 15 min
+accent: 8A5A2E
+material:
+  finish: glass
+  ink: 0A0A0B
+  topOpacity: 0.45
   fadeEnd: 0.85
   fadeCurve: 0.35
   floor: 0.00

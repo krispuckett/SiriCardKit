@@ -35,6 +35,22 @@ enum KitInk {
     static let state = Color(hex: 0x6F8F6A)
 }
 
+/// A resolved foreground: three steps of ink for one finish. The dark
+/// card carries light ink; the glass card flips to dark ink so the words
+/// sit directly on the system's milk.
+struct InkSet {
+    let primary: Color
+    let secondary: Color
+    let tertiary: Color
+
+    static let dark = InkSet(primary: KitInk.primary,
+                             secondary: KitInk.secondary,
+                             tertiary: KitInk.tertiary)
+    static let glass = InkSet(primary: Color(hex: 0x151517),
+                              secondary: Color(hex: 0x4A4A50),
+                              tertiary: Color(hex: 0x77777D))
+}
+
 extension Color {
     init(hex: UInt32) {
         self.init(

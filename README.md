@@ -24,7 +24,12 @@ your card rendered live on the light platter Siri actually hosts cards
 on. The card is a **canvas of blocks** (eyebrow, headline, metric rows,
 stat columns, a sentence, a state chip, a footnote, the action wells):
 tap a block on the card to edit it, move it, or remove it, and add
-whatever the composition laws still allow. Undo has your back. The laws are rails, not homework: a
+whatever the composition laws still allow. Undo has your back. The
+material comes in **two finishes**: dark ink you can tint to your
+brand's hue, or full glass, where the system's own material carries the
+card and the words flip to dark ink. The kit clamps ink and accent so
+an unreadable card cannot exist; your brand comes through as hue,
+accent, and voice. The laws are rails, not homework: a
 second headline cannot exist, the wells never leave the bottom, and the
 accent spends itself exactly once. Material dials and the accent sit
 beneath. Every edit saves a **recipe** (the ordered block list), and the
@@ -56,10 +61,11 @@ with your exact numbers and words.
 - `Sources/CardKit/CardPresets.swift` - four archetypes (demo brief,
   stats, words-only, confirmation) as whole recipes; their paste-in text
   forms live in `docs/PRESETS.md`.
-- `Sources/CardKit/` - the card itself: the material (ink that melts into
-  the system's own glass), the carved action wells, the metric row
-  grammar, and the full intent trio (main intent, snippet intent, control
-  intents) with every hard-won rule written next to the code it protects.
+- `Sources/CardKit/` - the card itself: the material (tinted ink that
+  melts into the system's own glass, or the full-glass finish), the
+  carved action wells, the metric row grammar, and the full intent trio
+  (main intent, snippet intent, control intents) with every hard-won
+  rule written next to the code it protects.
 - `AGENTS.md` / `CLAUDE.md` - rules files that make agents build your
   card correctly the first time, including how to read a recipe.
 - `.claude/skills/siri-card/` - the same rules as a portable Claude Code

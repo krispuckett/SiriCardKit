@@ -566,8 +566,59 @@ struct CardLab: View {
     private var materialPanel: some View {
         VStack(alignment: .leading, spacing: 10) {
             surface {
+                HStack(spacing: 6) {
+                    stateChip("Ink", on: recipe.material.finish == .ink) {
+                        setFinish(.ink)
+                    }
+                    stateChip("Glass", on: recipe.material.finish == .glass) {
+                        setFinish(.glass)
+                    }
+                    Spacer(minLength: 0)
+                }
+                divider
+                Group {
+                    HStack(spacing: 12) {
+                        ForEach([0x0A0A0B, 0x221A14, 0x16202E, 0x18251D, 0x231A26],
+                                id: \.self) { hex in
+                            Button {
+                                haptic()
+                                withAnimation(.easeOut(duration: 0.18)) {
+                                    recipe.material.inkHex = UInt32(hex)
+                                }
+                            } label: {
+                                Circle()
+                                    .fill(Color(hex: UInt32(hex)))
+                                    .frame(width: 30, height: 30)
+                                    .overlay {
+                                        Circle().strokeBorder(
+                                            recipe.material.inkHex == UInt32(hex)
+                                                ? KitInk.primary : .white.opacity(0.14),
+                                            lineWidth: recipe.material.inkHex == UInt32(hex) ? 2 : 1)
+                                    }
+                                    .frame(width: 40, height: 40)
+                                    .padding(2)
+                                    .contentShape(.circle)
+                                    .padding(-2)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(String(format: "Ink %06X", hex))
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    divider
+                    HStack(spacing: 12) {
+                        caption("Custom ink")
+                        Spacer(minLength: 0)
+                        AccentHexField(hex: $recipe.material.inkHex, typing: $typing,
+                                       transform: CardLaw.clampedInk)
+                    }
+                }
+                .opacity(recipe.material.finish == .glass ? 0.35 : 1)
+                .allowsHitTesting(recipe.material.finish == .ink)
+            }
+            surface {
                 dial("Top opacity", value: $recipe.material.topOpacity, in: 0...1,
-                     default: 0.95)
+                     default: recipe.material.finish.defaultTopOpacity)
                 divider
                 dial("Fade end", value: $recipe.material.fadeEnd, in: 0.15...1,
                      default: 0.85)
@@ -585,10 +636,26 @@ struct CardLab: View {
                 dial("Well depth", value: $recipe.material.wellDepth, in: 0...1,
                      default: 0.73)
             }
-            Text("The fade reaches zero under the buttons by design. If your card carries text low, raise the floor toward 0.88.")
+            Text(recipe.material.finish == .glass
+                 ? "Glass is the system's own material showing through; the card carries only a frost, and the words flip to dark ink."
+                 : "The fade reaches zero under the buttons by design. If your card carries text low, raise the floor toward 0.88.")
                 .font(.system(size: 12))
                 .foregroundStyle(KitInk.tertiary)
                 .padding(.leading, 2)
+        }
+    }
+
+    /// Flipping the finish swaps the body dial to the new finish's
+    /// default, but only if it still sat at the old one's: a hand-tuned
+    /// opacity is a verdict and survives the flip. Undo covers the rest.
+    private func setFinish(_ finish: CardFinish) {
+        guard recipe.material.finish != finish else { return }
+        let old = recipe.material.finish
+        withAnimation(.easeOut(duration: 0.2)) {
+            recipe.material.finish = finish
+            if abs(recipe.material.topOpacity - old.defaultTopOpacity) < 0.005 {
+                recipe.material.topOpacity = finish.defaultTopOpacity
+            }
         }
     }
 
@@ -629,9 +696,12 @@ struct CardLab: View {
                     AccentHexField(hex: $recipe.accentHex, typing: $typing)
                 }
             }
-            Text(recipe.chipWearsAccent
-                 ? "Spent once, on the chip. One accent is the law."
-                 : "Spent once, on the eyebrow. One accent is the law.")
+            Text((recipe.chipWearsAccent
+                  ? "Spent once, on the chip. One accent is the law."
+                  : "Spent once, on the eyebrow. One accent is the law.")
+                 + (recipe.material.finish == .glass
+                    ? " Glass wears it darkened, so it holds on the light ground."
+                    : ""))
                 .font(.system(size: 12))
                 .foregroundStyle(KitInk.tertiary)
                 .padding(.leading, 2)
@@ -913,6 +983,7 @@ private struct FlowingChips<Content: View>: View {
 private struct AccentHexField: View {
     @Binding var hex: UInt32
     var typing: FocusState<Bool>.Binding
+    var transform: (UInt32) -> UInt32 = { $0 }
     @State private var draft = ""
     @FocusState private var editing: Bool
 
@@ -941,7 +1012,7 @@ private struct AccentHexField: View {
         let cleaned = draft.trimmingCharacters(in: .whitespaces)
             .replacingOccurrences(of: "#", with: "")
         if cleaned.count == 6, let value = UInt32(cleaned, radix: 16) {
-            hex = value
+            hex = transform(value)
         }
         draft = String(format: "%06X", hex)
     }

@@ -30,15 +30,18 @@ enum CardMaterial {
     }
 
     /// Eleven explicit stops, so the curve is a real curve rather than two
-    /// colors with an eased interpolation between them.
+    /// colors with an eased interpolation between them. The ink is the
+    /// recipe's: a dark tint on the ink finish, a white frost on glass;
+    /// the same curve shapes both.
     static func inkStops(_ m: MaterialRecipe, fadeOver: Double? = nil) -> [Gradient.Stop] {
         let end = fadeOver ?? m.fadeEnd
+        let ink = m.inkColor
         var stops = (0...10).map { i -> Gradient.Stop in
             let t = Double(i) / 10
             let alpha = m.floor + (m.topOpacity - m.floor) * pow(1 - t, m.fadeCurve)
-            return .init(color: KitInk.bgBase.opacity(alpha), location: t * end)
+            return .init(color: ink.opacity(alpha), location: t * end)
         }
-        if end < 1 { stops.append(.init(color: KitInk.bgBase.opacity(m.floor), location: 1)) }
+        if end < 1 { stops.append(.init(color: ink.opacity(m.floor), location: 1)) }
         return stops
     }
 

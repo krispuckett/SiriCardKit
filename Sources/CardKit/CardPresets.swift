@@ -7,7 +7,7 @@
 import Foundation
 
 enum CardPreset: String, CaseIterable, Identifiable {
-    case demo, stats, words, confirmation
+    case demo, stats, words, confirmation, glass
 
     var id: String { rawValue }
 
@@ -17,6 +17,7 @@ enum CardPreset: String, CaseIterable, Identifiable {
         case .stats: "The stats card"
         case .words: "The words-only card"
         case .confirmation: "The confirmation card"
+        case .glass: "The glass card"
         }
     }
 
@@ -58,6 +59,24 @@ enum CardPreset: String, CaseIterable, Identifiable {
                     .wells(primary: "Add to calendar", secondary: "Undo"),
                 ],
                 accentHex: 0x6F8F6A
+            )
+        case .glass:
+            CardRecipe(
+                blocks: [
+                    .eyebrow("UP NEXT"),
+                    .headline("Design crit"),
+                    .row("WHEN", "2:00", "pm"),
+                    .row("WITH", "Maya + 3", ""),
+                    .footnote("Starts in 20 minutes."),
+                    .wells(primary: "Join", secondary: "Push 15 min"),
+                ],
+                accentHex: 0x8A5A2E,
+                material: {
+                    var m = MaterialRecipe()
+                    m.finish = .glass
+                    m.topOpacity = CardFinish.glass.defaultTopOpacity
+                    return m
+                }()
             )
         }
     }

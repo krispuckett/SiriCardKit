@@ -38,15 +38,17 @@ struct CardWellSkin: ViewModifier {
 }
 
 /// A well's label, in the carved register: type sits IN the material, so
-/// its ink rides slightly below full opacity.
+/// its ink rides slightly below full opacity. The ink set follows the
+/// card's finish.
 struct CardWellLabel: View {
     let title: String
     var prominent: Bool = false
+    var ink: InkSet = .dark
 
     var body: some View {
         Text(title)
             .font(.system(size: 13, weight: .medium))
-            .foregroundStyle((prominent ? KitInk.primary : KitInk.secondary).opacity(0.92))
+            .foregroundStyle((prominent ? ink.primary : ink.secondary).opacity(0.92))
             .frame(maxWidth: .infinity)
             .frame(height: 44)
             .contentShape(.capsule)

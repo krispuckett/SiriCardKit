@@ -32,6 +32,7 @@ struct SiriCard: View {
     var onBlockTap: ((UUID) -> Void)? = nil
 
     private var isEditing: Bool { onBlockTap != nil }
+    private var ink: InkSet { recipe.inkSet }
 
     private var visibleBlocks: [CardBlock] {
         isEditing ? recipe.blocks : recipe.blocks.filter(hasContent)
@@ -117,19 +118,19 @@ struct SiriCard: View {
             Text(displayText(block, placeholder: "EYEBROW").uppercased())
                 .font(.system(size: 11, weight: .bold, design: .monospaced))
                 .tracking(1.5)
-                .foregroundStyle(recipe.chipWearsAccent ? KitInk.tertiary : recipe.accent)
+                .foregroundStyle(recipe.chipWearsAccent ? ink.tertiary : recipe.resolvedAccent)
                 .opacity(block.text.isEmpty ? 0.5 : 1)
         case .headline:
             Text(displayText(block, placeholder: "Headline"))
                 .font(.system(size: 28, weight: .semibold))
                 .tracking(-0.4)
-                .foregroundStyle(KitInk.primary)
+                .foregroundStyle(ink.primary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
                 .opacity(block.text.isEmpty ? 0.4 : 1)
         case .row:
             CardMetricRow(label: block.label, value: block.value, unit: block.unit,
-                          showsUnitRail: hasUnitRail)
+                          showsUnitRail: hasUnitRail, ink: ink)
         case .columns:
             HStack(alignment: .top, spacing: 12) {
                 ForEach(block.cells) { cell in
@@ -137,13 +138,13 @@ struct SiriCard: View {
                         Text(cell.value)
                             .font(.system(size: 22, weight: .semibold, design: .monospaced))
                             .monospacedDigit()
-                            .foregroundStyle(KitInk.primary)
+                            .foregroundStyle(ink.primary)
                             .lineLimit(1)
                             .minimumScaleFactor(0.7)
                         Text(cell.label.uppercased())
                             .font(.system(size: 11, weight: .medium, design: .monospaced))
                             .tracking(1.2)
-                            .foregroundStyle(KitInk.tertiary)
+                            .foregroundStyle(ink.tertiary)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -151,7 +152,7 @@ struct SiriCard: View {
         case .sentence:
             Text(sentenceText(block) ?? "One thought, whole sentences")
                 .font(.system(size: 15))
-                .foregroundStyle(KitInk.secondary)
+                .foregroundStyle(ink.secondary)
                 .lineLimit(3)
                 .fixedSize(horizontal: false, vertical: true)
                 .opacity(sentenceText(block) == nil ? 0.4 : 1)
@@ -159,16 +160,16 @@ struct SiriCard: View {
             Text(displayText(block, placeholder: "STATE").uppercased())
                 .font(.system(size: 11, weight: .bold, design: .monospaced))
                 .tracking(1.2)
-                .foregroundStyle(recipe.accent)
+                .foregroundStyle(recipe.resolvedAccent)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
-                .background(recipe.accent.opacity(0.14), in: Capsule())
-                .overlay { Capsule().strokeBorder(recipe.accent.opacity(0.35), lineWidth: 1) }
+                .background(recipe.resolvedAccent.opacity(0.14), in: Capsule())
+                .overlay { Capsule().strokeBorder(recipe.resolvedAccent.opacity(0.35), lineWidth: 1) }
                 .opacity(block.text.isEmpty ? 0.5 : 1)
         case .footnote:
             Text(displayText(block, placeholder: "Quiet metadata"))
                 .font(.system(size: 11, design: .monospaced))
-                .foregroundStyle(KitInk.tertiary)
+                .foregroundStyle(ink.tertiary)
                 .opacity(block.text.isEmpty ? 0.5 : 1)
         case .wells:
             wellsView(block)
@@ -181,22 +182,22 @@ struct SiriCard: View {
             if isEditing {
                 // On the canvas the wells are scenery, so a tap selects
                 // the block instead of running an intent.
-                CardWellLabel(title: block.primary, prominent: true)
+                CardWellLabel(title: block.primary, prominent: true, ink: ink)
                     .cardWell(depth: recipe.material.wellDepth)
                 if !block.secondary.isEmpty {
-                    CardWellLabel(title: snoozed ? "Resume" : block.secondary)
+                    CardWellLabel(title: snoozed ? "Resume" : block.secondary, ink: ink)
                         .cardWell(depth: recipe.material.wellDepth)
                 }
             } else {
                 Button(intent: StartFocusIntent()) {
-                    CardWellLabel(title: block.primary, prominent: true)
+                    CardWellLabel(title: block.primary, prominent: true, ink: ink)
                 }
                 .buttonStyle(.plain)
                 .cardWell(depth: recipe.material.wellDepth)
 
                 if !block.secondary.isEmpty {
                     Button(intent: SnoozeIntent(snoozed: !snoozed)) {
-                        CardWellLabel(title: snoozed ? "Resume" : block.secondary)
+                        CardWellLabel(title: snoozed ? "Resume" : block.secondary, ink: ink)
                     }
                     .buttonStyle(.plain)
                     .cardWell(depth: recipe.material.wellDepth)
@@ -245,7 +246,10 @@ struct SiriCard: View {
                 .overlay {
                     if selection == block.id {
                         RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .strokeBorder(.white.opacity(0.85), lineWidth: 1.5)
+                            .strokeBorder(recipe.material.finish == .glass
+                                          ? Color.black.opacity(0.6)
+                                          : Color.white.opacity(0.85),
+                                          lineWidth: 1.5)
                             .padding(-6)
                     }
                 }
@@ -265,22 +269,23 @@ struct CardMetricRow: View {
     let value: String
     let unit: String
     var showsUnitRail: Bool = true
+    var ink: InkSet = .dark
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Text(label.uppercased())
                 .font(.system(size: 12, weight: .medium, design: .monospaced))
                 .tracking(1.2)
-                .foregroundStyle(KitInk.tertiary)
+                .foregroundStyle(ink.tertiary)
             Spacer(minLength: 12)
             Text(value)
                 .font(.system(size: 16, weight: .medium, design: .monospaced))
                 .monospacedDigit()
-                .foregroundStyle(KitInk.primary)
+                .foregroundStyle(ink.primary)
             if showsUnitRail {
                 Text(unit)
                     .font(.system(size: 12, design: .monospaced))
-                    .foregroundStyle(KitInk.tertiary)
+                    .foregroundStyle(ink.tertiary)
                     .frame(width: 34, alignment: .leading)
             }
         }

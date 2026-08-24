@@ -31,12 +31,16 @@ BLOCKS: line order is render order. Grammar:
   line.
 - `primary:` and `secondary:` form the wells block, which renders last
   wherever those lines appear.
-- `accent:` is 6 hex digits, then a `material:` block of dials
-  (topOpacity, fadeEnd, fadeCurve, floor, corner, rim, wellDepth).
+- `accent:` is 6 hex digits, then a `material:` block: `finish: ink` or
+  `finish: glass`, `ink:` (6 hex digits, clamped to the dark register),
+  and the dials (topOpacity, fadeEnd, fadeCurve, floor, corner, rim,
+  wellDepth).
 - Unknown keys are skipped. The laws apply on the way in: one of
   everything except rows (four at most), first wins, wells pinned last.
   The chip wears the accent when one exists and the eyebrow drops to
-  ink; that is decided, not configured.
+  ink; that is decided, not configured. On the glass finish the accent
+  renders darkened to hold on the light ground; the stored value is
+  unchanged.
 
 Bake its values into the card verbatim: the words as written, the block
 order as the layout, the material numbers as constants, the accent as the
@@ -78,12 +82,16 @@ only the person can answer; ask.
    a snippet view. The Siri sheet is itself glass; nested glass makes real
    devices silently drop the whole card. The simulator will NOT show this
    failure. Use plain gradients and strokes; transparency in the card
-   reveals the system's own glass, which is the correct glass look.
+   reveals the system's own glass, which is the correct glass look. The
+   kit's glass finish (`finish: glass`) is that look productized: a white
+   frost, the whole foreground flipped to dark ink, zero glass API.
 7. Design for the light platter. Siri hosts the card on a milk-colored
    material. Any region that fades toward transparent must not have text
    over it: hold ink through all type and reach zero only under the action
    wells. If a design needs text low on the card, raise the material floor
-   to 0.88 instead of letting text sit on the fade.
+   to 0.88 instead of letting text sit on the fade. Ink hue may be tinted
+   (`ink:`) but never lightened: clamp ink to the dark register so light
+   text survives, and on glass flip the foreground to dark ink.
 8. Only `Button(intent:)` and `Toggle(isOn:intent:)` are interactive in a
    snippet. `Button(action:)` and gestures render but do nothing.
 9. Keep the card under roughly 340 points tall so the actions stay above

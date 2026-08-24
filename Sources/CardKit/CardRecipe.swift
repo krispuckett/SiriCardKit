@@ -140,6 +140,33 @@ enum CardLaw {
         }
     }
 
+    /// Ink must stay in the dark register: light text lives on it. Any
+    /// hue survives; brightness gets scaled down until the words do too.
+    static func clampedInk(_ hex: UInt32) -> UInt32 {
+        clampedLuminance(hex, to: 0.035)
+    }
+
+    /// On the glass finish the accent is foreground on milk: keep the
+    /// hue, darken until it holds. The stored accent is untouched; this
+    /// only shapes how glass wears it.
+    static func clampedGlassAccent(_ hex: UInt32) -> UInt32 {
+        clampedLuminance(hex, to: 0.16)
+    }
+
+    private static func clampedLuminance(_ hex: UInt32, to cap: Double) -> UInt32 {
+        let r = Double((hex >> 16) & 0xFF) / 255
+        let g = Double((hex >> 8) & 0xFF) / 255
+        let b = Double(hex & 0xFF) / 255
+        // Gamma-space luminance; close enough for a one-way clamp.
+        let lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
+        guard lum > cap else { return hex }
+        let s = cap / lum
+        let rr = UInt32((r * s * 255).rounded())
+        let gg = UInt32((g * s * 255).rounded())
+        let bb = UInt32((b * s * 255).rounded())
+        return (rr << 16) | (gg << 8) | bb
+    }
+
     /// First-wins caps, wells pinned last, column cells trimmed to three.
     /// Order is otherwise preserved.
     static func normalized(_ blocks: [CardBlock]) -> [CardBlock] {
@@ -162,9 +189,25 @@ enum CardLaw {
 
 // MARK: - The material dials
 
+/// The card's finish. `ink` is the dark card: tinted ink melting into the
+/// system's glass. `glass` is the full-glass card: the card carries only
+/// a white frost, the system's own material does the rest, and the whole
+/// foreground flips to dark ink so the words survive the milk. Both obey
+/// LAW 1: never `glassEffect`, only transparency revealing theirs.
+enum CardFinish: String, Codable {
+    case ink, glass
+
+    /// Each finish has its own honest amount of body.
+    var defaultTopOpacity: Double {
+        self == .glass ? 0.45 : 0.95
+    }
+}
+
 /// The material dials, with the shipped defaults as the anchor. See
 /// CardMaterial.swift for what each one does and the two laws behind them.
 struct MaterialRecipe: Codable, Equatable {
+    var finish: CardFinish = .ink
+    var inkHex: UInt32 = 0x0A0A0B
     var topOpacity: Double = 0.95
     var fadeEnd: Double = 0.85
     var fadeCurve: Double = 0.35
@@ -172,6 +215,34 @@ struct MaterialRecipe: Codable, Equatable {
     var corner: Double = 42
     var rim: Double = 1.0
     var wellDepth: Double = 0.73
+
+    /// What the gradient is made of: the tinted ink, or the glass
+    /// finish's white frost.
+    var inkColor: Color {
+        finish == .glass ? .white : Color(hex: inkHex)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case finish, inkHex, topOpacity, fadeEnd, fadeCurve, floor, corner,
+             rim, wellDepth
+    }
+
+    init() {}
+
+    // decodeIfPresent throughout, so designs saved before a dial existed
+    // keep loading.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        finish = try c.decodeIfPresent(CardFinish.self, forKey: .finish) ?? .ink
+        inkHex = try c.decodeIfPresent(UInt32.self, forKey: .inkHex) ?? 0x0A0A0B
+        topOpacity = try c.decodeIfPresent(Double.self, forKey: .topOpacity) ?? 0.95
+        fadeEnd = try c.decodeIfPresent(Double.self, forKey: .fadeEnd) ?? 0.85
+        fadeCurve = try c.decodeIfPresent(Double.self, forKey: .fadeCurve) ?? 0.35
+        floor = try c.decodeIfPresent(Double.self, forKey: .floor) ?? 0
+        corner = try c.decodeIfPresent(Double.self, forKey: .corner) ?? 42
+        rim = try c.decodeIfPresent(Double.self, forKey: .rim) ?? 1.0
+        wellDepth = try c.decodeIfPresent(Double.self, forKey: .wellDepth) ?? 0.73
+    }
 }
 
 // MARK: - The recipe
@@ -212,6 +283,20 @@ struct CardRecipe: Codable, Equatable {
     /// One accent is the law, so this is decided, not configured.
     var chipWearsAccent: Bool {
         blocks.contains { $0.kind == .chip }
+    }
+
+    /// The foreground set for the current finish: light ink on the dark
+    /// card, dark ink on glass.
+    var inkSet: InkSet {
+        material.finish == .glass ? .glass : .dark
+    }
+
+    /// The accent as this finish wears it: verbatim on ink, darkened to
+    /// hold on glass's light ground.
+    var resolvedAccent: Color {
+        material.finish == .glass
+            ? Color(hex: CardLaw.clampedGlassAccent(accentHex))
+            : accent
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -317,6 +402,8 @@ extension CardRecipe {
         }
         out.append(String(format: "accent: %06X", accentHex))
         out.append("material:")
+        out.append("  finish: \(material.finish.rawValue)")
+        out.append(String(format: "  ink: %06X", material.inkHex))
         out.append(String(format: "  topOpacity: %.2f", material.topOpacity))
         out.append(String(format: "  fadeEnd: %.2f", material.fadeEnd))
         out.append(String(format: "  fadeCurve: %.2f", material.fadeCurve))
@@ -410,6 +497,14 @@ extension CardRecipe {
             case "secondary": wellSecondary = value; sawAnything = true
             case "accent":
                 if let hex = UInt32(value, radix: 16) { accentHex = hex; sawAnything = true }
+            case "finish":
+                if let finish = CardFinish(rawValue: value.lowercased()) {
+                    material.finish = finish
+                }
+            case "ink":
+                if let hex = UInt32(value, radix: 16) {
+                    material.inkHex = CardLaw.clampedInk(hex)
+                }
             case "topOpacity": material.topOpacity = clamp(value, 0, 1) ?? material.topOpacity
             case "fadeEnd": material.fadeEnd = clamp(value, 0.15, 1) ?? material.fadeEnd
             case "fadeCurve": material.fadeCurve = clamp(value, 0.05, 4) ?? material.fadeCurve

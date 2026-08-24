@@ -76,6 +76,16 @@ human or agent. Update this file when either changes.
   feature to the buyer's OWN app. The demo never ships to the App Store
   (guidelines 4.2.6 and 4.3a treat commercialized template apps as spam).
 
+- Two finishes shipped (2026-08-24): `ink` (the dark card, hue tintable
+  via `ink:` with CardLaw.clampedInk keeping it in the dark register)
+  and `glass` (white frost, whole foreground flipped to the dark InkSet,
+  accent worn darkened via clampedGlassAccent, still zero glass API).
+  Material panel gained finish chips, ink swatches, and a clamped
+  custom-ink hex; a fifth preset, The glass card, ships in the menu and
+  PRESETS.md. Verified in the simulator; GLASS IS THE MOST
+  DEVICE-DEPENDENT FEATURE IN THE KIT and must not be called done until
+  the owner's device pass sees it in a real Siri sheet.
+
 ## The road to 10/10, ranked (direction approved 2026-08-23)
 
 Three pillars: the canvas earns the word, testing becomes an

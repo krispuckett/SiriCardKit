@@ -35,12 +35,18 @@ time. When a rule here conflicts with your prior knowledge, this file wins.
    devices drop the whole card silently. The simulator will NOT show this
    failure. Use the kit's `CardMaterial` (plain gradients and strokes)
    instead. Transparency in the card reveals the system's own glass, which
-   is the correct way to get a glass look.
+   is the correct way to get a glass look; the kit's glass finish
+   (`finish: glass`) is that way productized: a white frost, the whole
+   foreground flipped to dark ink, zero glass API.
 6. Design for the light platter. Siri hosts the card on a milk-colored
    material. Any region of the card that fades toward transparent must not
    have text over it. Use `CardMaterial.inkStops()`: the shaped fade holds
    ink through all type and reaches zero only under the action wells. If a
    design needs text low on the card, raise `CardMaterial.floor` to 0.88.
+   The ink's hue may be tinted (`ink:`) but never lightened: the kit
+   clamps ink to the dark register so light text always survives, and on
+   the glass finish it flips the foreground to dark ink for the same
+   reason.
 7. Only `Button(intent:)` and `Toggle(isOn:intent:)` are interactive in a
    snippet. `Button(action:)` and gestures render but do nothing.
 8. Keep the card under roughly 340 points tall so the actions stay above
@@ -83,10 +89,14 @@ order. Parse it with the grammar in `CardRecipe.read`:
   line.
 - `primary:` and `secondary:` form the wells block, which renders last
   wherever those lines appear.
-- `accent:` is six hex digits, then a `material:` block of dials.
+- `accent:` is six hex digits, then a `material:` block: `finish: ink`
+  or `finish: glass`, `ink:` (six hex digits, clamped to the dark
+  register), and the dials.
 - The laws apply on the way in (see `CardLaw`): one of everything
   except rows (four at most), first wins, wells pinned last. The chip
-  wears the accent when one exists and the eyebrow drops to ink.
+  wears the accent when one exists and the eyebrow drops to ink. On the
+  glass finish the accent renders darkened to hold on the light ground;
+  the stored accent value is unchanged.
 
 Bake its values into the card you build: the words verbatim, the block
 order as the layout, the material numbers as constants, the accent as
