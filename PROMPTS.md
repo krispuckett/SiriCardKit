@@ -1,7 +1,7 @@
 # The prompt
 
-Design first, in the app: open the Card Lab, tune the words, rows,
-material, and accent until the card is yours, then tap **Copy for
+Design first, in the app: open the Card Lab, tune the blocks, the
+material, and the accent until the card is yours, then tap **Copy for
 agent**. That one tap writes this whole prompt with your recipe already
 inside it; fill in the bracketed lines and paste it to Claude Code (or
 Codex, or Cursor) with this repo open. The scaffold, for reference:

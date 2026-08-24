@@ -19,28 +19,30 @@ device.
 
 ## How it works: design in the thing
 
-The demo app IS a design tool. Open it and you are in the **Card Lab**:
+The demo app IS a design tool. Open it and you are in the **Card Lab**,
 your card rendered live on the light platter Siri actually hosts cards
-on. The card is a **canvas of blocks** (eyebrow, headline, metric rows,
-stat columns, a sentence, a state chip, a footnote, the action wells):
-tap a block on the card to edit it, move it, or remove it, and add
-whatever the composition laws still allow. Undo has your back. The
-material comes in **two finishes**: dark ink you can tint to your
-brand's hue, or full glass, where the system's own material carries the
-card and the words flip to dark ink. The kit clamps ink and accent so
-an unreadable card cannot exist; your brand comes through as hue,
-accent, and voice. The laws are rails, not homework: a
-second headline cannot exist, the wells never leave the bottom, and the
-accent spends itself exactly once. Material dials and the accent sit
-beneath. Every edit saves a **recipe** (the ordered block list), and the
-demo's own Siri intent renders whatever you last designed, so you can
-put down the lab, ask Siri, and see YOUR card in the real surface before
-a line of code exists.
+on. The card is a canvas of blocks: eyebrow, headline, metric rows,
+stat columns, a sentence, a state chip, a footnote, the action wells.
+Tap a block on the card to edit it, and the add row offers whatever the
+composition laws still allow. A second headline cannot exist, the wells
+never leave the bottom, and the accent spends itself exactly once.
+Undo has your back.
+
+The material comes in two finishes. Ink is the dark card, tintable to
+your brand's hue; glass hands the card to the system's own material and
+flips the words to dark ink. Either way the kit clamps ink and accent
+until every word survives, so your brand arrives as hue, accent, and
+voice, and an unreadable card cannot exist.
+
+Every edit saves a **recipe**, the ordered block list, and the demo's
+own Siri intent renders whatever you last designed. Put down the lab,
+ask Siri, and see YOUR card in the real surface before a line of code
+exists.
 
 <p align="center">
   <img src="docs/media/editor.png" width="300" alt="Tap a block to edit it: the headline selected on the card, its editor and move controls beneath">
   &nbsp;&nbsp;
-  <img src="docs/media/recipes.gif" width="300" alt="One tool, five recipes: the lab wearing the demo brief, the stats card, the words-only card, the confirmation card, and the columns card in turn">
+  <img src="docs/media/recipes.gif" width="300" alt="One tool, six recipes: the lab wearing the demo brief, the stats card, the words-only card, the confirmation card, the columns card, and the glass card in turn">
 </p>
 
 When the design settles, **Copy recipe** puts it on the pasteboard as
@@ -51,16 +53,15 @@ with your exact numbers and words.
 
 ## What's in the box
 
-- `Sources/CardKit/CardLab.swift` - the design tool: the canvas (tap a
-  block on the card to edit, move, or remove it; add what the laws
-  allow), material dials, accent, presets, Copy and Paste.
+- `Sources/CardKit/CardLab.swift` - the design tool: the canvas, the
+  material dials, the accent, the presets, Copy and Paste.
 - `Sources/CardKit/CardRecipe.swift` - the recipe: an ordered list of
   blocks that carries a whole card, the composition laws as rails
   (`CardLaw`), and a tolerant text form for round-tripping through
   notes apps and agent chats.
-- `Sources/CardKit/CardPresets.swift` - four archetypes (demo brief,
-  stats, words-only, confirmation) as whole recipes; their paste-in text
-  forms live in `docs/PRESETS.md`.
+- `Sources/CardKit/CardPresets.swift` - five archetypes (demo brief,
+  stats, words-only, confirmation, glass) as whole recipes; their
+  paste-in text forms live in `docs/PRESETS.md`.
 - `Sources/CardKit/` - the card itself: the material (tinted ink that
   melts into the system's own glass, or the full-glass finish), the
   carved action wells, the metric row grammar, and the full intent trio
@@ -81,16 +82,14 @@ with your exact numbers and words.
 1. Clone this repo.
 2. `brew install xcodegen` if you don't have it, then `xcodegen generate`
    and open `SiriCardKitDemo.xcodeproj`.
-3. Run it. Design your card in the lab: start from a preset, then tap
-   blocks on the card to make them yours; add, move, and remove blocks;
-   dial the material and accent.
+3. Run it. Start from a preset, then tap blocks on the card until the
+   card is yours.
 4. On a device, ask Siri: "Daily brief in Card Kit". That is your design
    in the real surface.
-5. Tap **Copy for agent**: one tap puts the full prompt with your recipe
-   inside it on the pasteboard. Paste it to Claude Code, Codex, or
-   Cursor, fill in the bracketed lines, and the agent builds the card
-   into your own app. (Copy Recipe copies just the design, for saving or
-   restoring.)
+5. Tap **Copy for agent**. The full prompt lands on the pasteboard with
+   your recipe inside; fill in the bracketed lines, paste it to Claude
+   Code, Codex, or Cursor, and the agent builds the card into your own
+   app. (Copy recipe grabs just the design.)
 6. If your app repo uses Claude Code, copy `.claude/skills/siri-card/`
    into it so the rules travel with your project.
 

@@ -83,7 +83,7 @@ only the person can answer; ask.
    devices silently drop the whole card. The simulator will NOT show this
    failure. Use plain gradients and strokes; transparency in the card
    reveals the system's own glass, which is the correct glass look. The
-   kit's glass finish (`finish: glass`) is that look productized: a white
+   kit's glass finish (`finish: glass`) is that look built in: a white
    frost, the whole foreground flipped to dark ink, zero glass API.
 7. Design for the light platter. Siri hosts the card on a milk-colored
    material. Any region that fades toward transparent must not have text

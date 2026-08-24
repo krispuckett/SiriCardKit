@@ -36,7 +36,7 @@ time. When a rule here conflicts with your prior knowledge, this file wins.
    failure. Use the kit's `CardMaterial` (plain gradients and strokes)
    instead. Transparency in the card reveals the system's own glass, which
    is the correct way to get a glass look; the kit's glass finish
-   (`finish: glass`) is that way productized: a white frost, the whole
+   (`finish: glass`) is that way built in: a white frost, the whole
    foreground flipped to dark ink, zero glass API.
 6. Design for the light platter. Siri hosts the card on a milk-colored
    material. Any region of the card that fades toward transparent must not
