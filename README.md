@@ -7,34 +7,27 @@ doing the typing.
   <img src="docs/media/lab.png" width="340" alt="The Card Lab: a Siri card with a live chip, stat columns, and action wells on the light platter, its blocks listed beneath">
 </p>
 
-iOS 26 gave apps interactive Siri snippets: real cards with live buttons
-that Siri and Spotlight present when someone asks about your app. Apple's
-documentation teaches the API. This kit teaches the part that is not
-written down: how to make a card that looks designed, and the specific
-failures that make cards silently not appear on real devices while the
-simulator swears everything is fine.
+iOS 26 gave apps interactive Siri snippets: cards with live buttons,
+shown when someone asks Siri about your app. Apple's docs teach the
+API. This kit teaches the rest: cards that look designed, and the
+failures the simulator hides.
 
-Everything in here was extracted from a production app and verified on
-device.
+Everything here came from a production app, verified on device.
 
 ## How it works: design in the thing
 
-The demo app is the design tool. Run it and your card sits at the top
-of the screen, on the same light background Siri actually uses. Tap
-anything on the card to change it: the headline, a row, a button. Add
-what you want from the row beneath. The lab enforces the rules that
-make these cards work on a real device, so you get one headline, four
-rows at most, and the buttons stay at the bottom. There's undo.
+The demo app is the design tool. Your card sits on the light background
+Siri actually uses; tap anything on it to change it. The rules are
+built in: one headline, four rows max, buttons at the bottom. There's
+undo.
 
-The card has two looks. Dark ink, which you can tint toward a brand
-color, or glass, where the card goes clear and the text flips dark so
-it holds up on Siri's light sheet. Pick an ink or accent that's too
-bright and the lab pulls it down until the words still read.
+Two looks: dark ink you can tint toward a brand color, or glass, where
+the card goes clear and the text flips dark. Pick a color too bright
+and the lab darkens it until the words read.
 
-Every change saves as a **recipe**, and the demo's own Siri intent
-reads that recipe. So put the lab down, say "Daily brief in Card Kit",
-and Siri shows the card you just made. You haven't written any code
-yet.
+Every change saves as a **recipe**, and the demo's Siri intent reads
+it. Say "Daily brief in Card Kit" and Siri shows the card you just
+made. No code yet.
 
 <p align="center">
   <img src="docs/media/editor.png" width="300" alt="Tap a block to edit it: the headline selected on the card, its editor and move controls beneath">
